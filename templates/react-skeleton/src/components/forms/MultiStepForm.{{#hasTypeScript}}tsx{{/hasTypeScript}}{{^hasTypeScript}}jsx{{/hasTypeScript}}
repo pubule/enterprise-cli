@@ -1,0 +1,798 @@
+{{#hasTypeScript}}import React, { useState, useCallback, useEffect, useMemo } from 'react';{{/hasTypeScript}}{{^hasTypeScript}}import React, { useState, useCallback, useEffect, useMemo } from 'react';{{/hasTypeScript}}
+{{#isMaterialUI}}
+import {
+  Box,
+  Stepper,
+  Step,
+  StepLabel,
+  StepContent,
+  Button,
+  Typography,
+  Paper,
+  LinearProgress,
+  Card,
+  CardContent,
+  CardHeader,
+  Collapse,
+  IconButton,
+  Alert,
+  Divider,
+  Grid,
+  Chip,
+  Fade,
+  CircularProgress,
+} from '@mui/material';
+import {
+  NavigateNext,
+  NavigateBefore,
+  CheckCircle,
+  Error,
+  Warning,
+  ExpandMore,
+  ExpandLess,
+  Save,
+  Refresh,
+} from '@mui/icons-material';{{/isMaterialUI}}
+{{#isAntDesign}}
+import {
+  Steps,
+  Button,
+  Card,
+  Progress,
+  Typography,
+  Space,
+  Alert,
+  Divider,
+  Row,
+  Col,
+  Tag,
+  Collapse,
+  Spin,
+  Result,
+} from 'antd';
+import {
+  RightOutlined,
+  LeftOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ExclamationCircleOutlined,
+  SaveOutlined,
+  ReloadOutlined,
+} from '@ant-design/icons';
+
+const { Title, Text } = Typography;
+const { Panel } = Collapse;{{/isAntDesign}}
+import { useFormValidation } from '../../hooks/useFormValidation';
+import { useNotification } from '../../contexts/NotificationContext';
+
+{{#hasTypeScript}}
+// Step configuration interface
+interface FormStep {
+  key: string;
+  title: string;
+  description?: string;
+  icon?: React.ReactNode;
+  content: React.ReactNode;
+  validationFields?: string[];
+  optional?: boolean;
+  skipCondition?: (formData: Record<string, any>) => boolean;
+  enableCondition?: (formData: Record<string, any>) => boolean;
+  onEnter?: (formData: Record<string, any>) => void | Promise<void>;
+  onExit?: (formData: Record<string, any>) => void | Promise<void>;
+  onValidate?: (formData: Record<string, any>) => Promise<string | null>;
+}
+
+// MultiStepForm props interface
+interface MultiStepFormProps {
+  steps: FormStep[];
+  initialData?: Record<string, any>;
+  validationConfig?: Record<string, any>;
+  onSubmit?: (data: Record<string, any>) => Promise<void>;
+  onCancel?: () => void;
+  onStepChange?: (step: number, data: Record<string, any>) => void;
+  onDataChange?: (data: Record<string, any>) => void;
+  submitText?: string;
+  cancelText?: string;
+  nextText?: string;
+  backText?: string;
+  saveText?: string;
+  allowStepNavigation?: boolean;
+  showProgress?: boolean;
+  showStepNumbers?: boolean;
+  allowSaveProgress?: boolean;
+  autoSave?: boolean;
+  autoSaveInterval?: number;
+  orientation?: 'horizontal' | 'vertical';
+  size?: 'small' | 'medium' | 'large';
+  variant?: 'standard' | 'compact' | 'expanded';
+  persistData?: boolean;
+  storageKey?: string;
+  loading?: boolean;
+  disabled?: boolean;
+  className?: string;
+}
+
+// Step status type
+type StepStatus = 'waiting' | 'active' | 'completed' | 'error' | 'skipped';
+{{/hasTypeScript}}
+
+{{#hasTypeScript}}export const MultiStepForm: React.FC<MultiStepFormProps> = ({{{/hasTypeScript}}{{^hasTypeScript}}export const MultiStepForm = ({{{/hasTypeScript}}
+  steps,
+  initialData = {},
+  validationConfig = {},
+  onSubmit,
+  onCancel,
+  onStepChange,
+  onDataChange,
+  submitText = 'Submit',
+  cancelText = 'Cancel',
+  nextText = 'Next',
+  backText = 'Back',
+  saveText = 'Save Progress',
+  allowStepNavigation = false,
+  showProgress = true,
+  showStepNumbers = true,
+  allowSaveProgress = false,
+  autoSave = false,
+  autoSaveInterval = 30000,
+  orientation = 'horizontal',
+  size = 'medium',
+  variant = 'standard',
+  persistData = false,
+  storageKey = 'multiStepFormData',
+  loading = false,
+  disabled = false,
+  className,
+}) => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [formData, setFormData] = useState{{#hasTypeScript}}<Record<string, any>>{{/hasTypeScript}}(initialData);
+  const [stepStatuses, setStepStatuses] = useState{{#hasTypeScript}}<Record<number, StepStatus>>{{/hasTypeScript}}({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [expandedStep, setExpandedStep] = useState{{#hasTypeScript}}<number | null>{{/hasTypeScript}}(null);
+
+  const { success, error: showError } = useNotification();
+
+  // Initialize form validation
+  const {
+    errors,
+    touched,
+    isValid,
+    validate,
+    validateField,
+    clearErrors,
+    setFieldTouched,
+  } = useFormValidation(formData, validationConfig);
+
+  // Load persisted data on mount
+  useEffect(() => {
+    if (persistData && typeof window !== 'undefined') {
+      try {
+        const savedData = localStorage.getItem(storageKey);
+        if (savedData) {
+          const parsed = JSON.parse(savedData);
+          setFormData(prev => ({ ...prev, ...parsed.data }));
+          setCurrentStep(parsed.step || 0);
+        }
+      } catch (error) {
+        console.warn('Failed to load persisted form data:', error);
+      }
+    }
+  }, [persistData, storageKey]);
+
+  // Auto-save functionality
+  useEffect(() => {
+    if (!autoSave) return;
+
+    const timer = setInterval(() => {
+      saveProgress();
+    }, autoSaveInterval);
+
+    return () => clearInterval(timer);
+  }, [autoSave, autoSaveInterval, formData, currentStep]);
+
+  // Persist data when it changes
+  useEffect(() => {
+    if (persistData && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify({
+          data: formData,
+          step: currentStep,
+          timestamp: Date.now(),
+        }));
+      } catch (error) {
+        console.warn('Failed to persist form data:', error);
+      }
+    }
+  }, [formData, currentStep, persistData, storageKey]);
+
+  // Update step statuses
+  useEffect(() => {
+    const newStatuses = {};
+
+    steps.forEach((step, index) => {
+      if (index < currentStep) {
+        newStatuses[index] = 'completed';
+      } else if (index === currentStep) {
+        newStatuses[index] = 'active';
+      } else {
+        newStatuses[index] = 'waiting';
+      }
+
+      // Check skip condition
+      if (step.skipCondition && step.skipCondition(formData)) {
+        newStatuses[index] = 'skipped';
+      }
+    });
+
+    setStepStatuses(newStatuses);
+  }, [currentStep, formData, steps]);
+
+  // Calculate progress
+  const progress = useMemo(() => {
+    const completedSteps = Object.values(stepStatuses).filter(
+      status => status === 'completed'
+    ).length;
+    return (completedSteps / steps.length) * 100;
+  }, [stepStatuses, steps.length]);
+
+  // Get available steps (not skipped)
+  const availableSteps = useMemo(() => {
+    return steps.filter((step, index) => {
+      return !step.skipCondition || !step.skipCondition(formData);
+    });
+  }, [steps, formData]);
+
+  // Handle form data change
+  const handleDataChange = useCallback((newData{{#hasTypeScript}}: Record<string, any>{{/hasTypeScript}}) => {
+    setFormData(prev => {
+      const updated = { ...prev, ...newData };
+      onDataChange?.(updated);
+      return updated;
+    });
+  }, [onDataChange]);
+
+  // Validate current step
+  const validateCurrentStep = useCallback(async (){{#hasTypeScript}}: Promise<boolean>{{/hasTypeScript}} => {
+    const step = steps[currentStep];
+    if (!step) return true;
+
+    // Validate specific fields for this step
+    if (step.validationFields) {
+      let isStepValid = true;
+
+      for (const fieldName of step.validationFields) {
+        const isFieldValid = await validate(fieldName);
+        if (!isFieldValid) {
+          isStepValid = false;
+        }
+      }
+
+      if (!isStepValid) {
+        setStepStatuses(prev => ({ ...prev, [currentStep]: 'error' }));
+        return false;
+      }
+    }
+
+    // Custom step validation
+    if (step.onValidate) {
+      try {
+        const validationError = await step.onValidate(formData);
+        if (validationError) {
+          showError('Validation Error', validationError);
+          setStepStatuses(prev => ({ ...prev, [currentStep]: 'error' }));
+          return false;
+        }
+      } catch (error) {
+        showError('Validation Error', error.message || 'Step validation failed');
+        setStepStatuses(prev => ({ ...prev, [currentStep]: 'error' }));
+        return false;
+      }
+    }
+
+    setStepStatuses(prev => ({ ...prev, [currentStep]: 'completed' }));
+    return true;
+  }, [currentStep, steps, formData, validate, showError]);
+
+  // Navigate to next step
+  const handleNext = useCallback(async () => {
+    const isStepValid = await validateCurrentStep();
+    if (!isStepValid) return;
+
+    const currentStepConfig = steps[currentStep];
+
+    // Call step exit handler
+    try {
+      if (currentStepConfig.onExit) {
+        await currentStepConfig.onExit(formData);
+      }
+    } catch (error) {
+      showError('Error', error.message || 'Failed to exit step');
+      return;
+    }
+
+    let nextStepIndex = currentStep + 1;
+
+    // Skip steps that meet skip condition
+    while (nextStepIndex < steps.length) {
+      const nextStep = steps[nextStepIndex];
+      if (!nextStep.skipCondition || !nextStep.skipCondition(formData)) {
+        break;
+      }
+      nextStepIndex++;
+    }
+
+    if (nextStepIndex < steps.length) {
+      setCurrentStep(nextStepIndex);
+      onStepChange?.(nextStepIndex, formData);
+
+      // Call step enter handler
+      const nextStepConfig = steps[nextStepIndex];
+      try {
+        if (nextStepConfig.onEnter) {
+          await nextStepConfig.onEnter(formData);
+        }
+      } catch (error) {
+        showError('Error', error.message || 'Failed to enter step');
+      }
+    }
+  }, [currentStep, steps, formData, validateCurrentStep, onStepChange, showError]);
+
+  // Navigate to previous step
+  const handleBack = useCallback(() => {
+    let prevStepIndex = currentStep - 1;
+
+    // Skip steps that meet skip condition
+    while (prevStepIndex >= 0) {
+      const prevStep = steps[prevStepIndex];
+      if (!prevStep.skipCondition || !prevStep.skipCondition(formData)) {
+        break;
+      }
+      prevStepIndex--;
+    }
+
+    if (prevStepIndex >= 0) {
+      setCurrentStep(prevStepIndex);
+      onStepChange?.(prevStepIndex, formData);
+    }
+  }, [currentStep, steps, formData, onStepChange]);
+
+  // Navigate to specific step
+  const handleStepClick = useCallback(async (stepIndex{{#hasTypeScript}}: number{{/hasTypeScript}}) => {
+    if (!allowStepNavigation || disabled) return;
+
+    // Validate current step before navigation
+    if (stepIndex > currentStep) {
+      const isValid = await validateCurrentStep();
+      if (!isValid) return;
+    }
+
+    setCurrentStep(stepIndex);
+    onStepChange?.(stepIndex, formData);
+  }, [allowStepNavigation, disabled, currentStep, validateCurrentStep, onStepChange, formData]);
+
+  // Save progress
+  const saveProgress = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      // Here you would typically save to a backend
+      success('Progress Saved', 'Your progress has been saved');
+    } catch (error) {
+      showError('Save Failed', error.message || 'Failed to save progress');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [success, showError]);
+
+  // Submit form
+  const handleSubmit = useCallback(async () => {
+    // Validate all steps
+    let allValid = true;
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      if (step.skipCondition && step.skipCondition(formData)) continue;
+
+      if (step.validationFields) {
+        for (const fieldName of step.validationFields) {
+          const isFieldValid = await validate(fieldName);
+          if (!isFieldValid) {
+            allValid = false;
+          }
+        }
+      }
+
+      if (step.onValidate) {
+        try {
+          const validationError = await step.onValidate(formData);
+          if (validationError) {
+            allValid = false;
+            setStepStatuses(prev => ({ ...prev, [i]: 'error' }));
+          }
+        } catch (error) {
+          allValid = false;
+          setStepStatuses(prev => ({ ...prev, [i]: 'error' }));
+        }
+      }
+    }
+
+    if (!allValid) {
+      showError('Validation Error', 'Please fix all errors before submitting');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onSubmit?.(formData);
+      success('Success', 'Form submitted successfully');
+
+      // Clear persisted data on successful submit
+      if (persistData && typeof window !== 'undefined') {
+        localStorage.removeItem(storageKey);
+      }
+    } catch (error) {
+      showError('Submit Failed', error.message || 'Failed to submit form');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [steps, formData, validate, onSubmit, success, showError, persistData, storageKey]);
+
+  const isLastStep = currentStep === steps.length - 1;
+  const isFirstStep = currentStep === 0;
+  const currentStepConfig = steps[currentStep];
+
+  {{#isMaterialUI}}
+  const renderStepContent = () => {
+    if (variant === 'compact') {
+      return (
+        <Card>
+          <CardHeader
+            title={currentStepConfig?.title}
+            subheader={currentStepConfig?.description}
+            action={
+              showProgress && (
+                <Box sx={{ minWidth: 100 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    {Math.round(progress)}%
+                  </Typography>
+                  <LinearProgress variant="determinate" value={progress} />
+                </Box>
+              )
+            }
+          />
+          <CardContent>
+            {currentStepConfig?.content}
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (variant === 'expanded') {
+      return (
+        <Box>
+          {steps.map((step, index) => (
+            <Card key={step.key} sx={{ mb: 2 }}>
+              <CardHeader
+                title={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Chip
+                      label={index + 1}
+                      size="small"
+                      color={
+                        stepStatuses[index] === 'completed' ? 'success' :
+                        stepStatuses[index] === 'active' ? 'primary' :
+                        stepStatuses[index] === 'error' ? 'error' : 'default'
+                      }
+                    />
+                    <Typography variant="h6">{step.title}</Typography>
+                    {stepStatuses[index] === 'completed' && <CheckCircle color="success" />}
+                    {stepStatuses[index] === 'error' && <Error color="error" />}
+                  </Box>
+                }
+                subheader={step.description}
+                action={
+                  <IconButton
+                    onClick={() => setExpandedStep(expandedStep === index ? null : index)}
+                  >
+                    {expandedStep === index ? <ExpandLess /> : <ExpandMore />}
+                  </IconButton>
+                }
+              />
+              <Collapse in={expandedStep === index || stepStatuses[index] === 'active'}>
+                <CardContent>
+                  {step.content}
+                </CardContent>
+              </Collapse>
+            </Card>
+          ))}
+        </Box>
+      );
+    }
+
+    // Standard variant
+    return (
+      <Box>
+        <Stepper
+          activeStep={currentStep}
+          orientation={orientation}
+          sx={{ mb: 3 }}
+        >
+          {steps.map((step, index) => (
+            <Step
+              key={step.key}
+              completed={stepStatuses[index] === 'completed'}
+              disabled={disabled}
+            >
+              <StepLabel
+                error={stepStatuses[index] === 'error'}
+                optional={step.optional && <Typography variant="caption">Optional</Typography>}
+                onClick={() => handleStepClick(index)}
+                sx={{ cursor: allowStepNavigation ? 'pointer' : 'default' }}
+              >
+                {step.title}
+              </StepLabel>
+              {orientation === 'vertical' && (
+                <StepContent>
+                  <Box sx={{ mb: 2 }}>
+                    {step.description && (
+                      <Typography color="text.secondary" sx={{ mb: 2 }}>
+                        {step.description}
+                      </Typography>
+                    )}
+                    {index === currentStep && step.content}
+                  </Box>
+                </StepContent>
+              )}
+            </Step>
+          ))}
+        </Stepper>
+
+        {orientation === 'horizontal' && (
+          <Fade in={true} key={currentStep}>
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                {currentStepConfig?.title}
+              </Typography>
+              {currentStepConfig?.description && (
+                <Typography color="text.secondary" sx={{ mb: 3 }}>
+                  {currentStepConfig.description}
+                </Typography>
+              )}
+              <Box>{currentStepConfig?.content}</Box>
+            </Box>
+          </Fade>
+        )}
+      </Box>
+    );
+  };
+
+  return (
+    <Box className={className}>
+      {showProgress && variant !== 'compact' && (
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+            <Typography variant="body2">
+              Step {currentStep + 1} of {steps.length}
+            </Typography>
+            <Typography variant="body2">
+              {Math.round(progress)}% Complete
+            </Typography>
+          </Box>
+          <LinearProgress variant="determinate" value={progress} />
+        </Box>
+      )}
+
+      {renderStepContent()}
+
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+        <Box>
+          {onCancel && (
+            <Button onClick={onCancel} disabled={isSubmitting || disabled}>
+              {cancelText}
+            </Button>
+          )}
+          {allowSaveProgress && (
+            <Button
+              onClick={saveProgress}
+              disabled={isSaving || disabled}
+              startIcon={isSaving ? <CircularProgress size={20} /> : <Save />}
+              sx={{ ml: 1 }}
+            >
+              {saveText}
+            </Button>
+          )}
+        </Box>
+
+        <Box>
+          <Button
+            onClick={handleBack}
+            disabled={isFirstStep || isSubmitting || disabled}
+            startIcon={<NavigateBefore />}
+            sx={{ mr: 1 }}
+          >
+            {backText}
+          </Button>
+
+          {isLastStep ? (
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={isSubmitting || loading || disabled}
+              startIcon={isSubmitting ? <CircularProgress size={20} /> : undefined}
+            >
+              {submitText}
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              onClick={handleNext}
+              disabled={isSubmitting || loading || disabled}
+              endIcon={<NavigateNext />}
+            >
+              {nextText}
+            </Button>
+          )}
+        </Box>
+      </Box>
+    </Box>
+  );{{/isMaterialUI}}
+
+  {{#isAntDesign}}
+  const renderStepContent = () => {
+    if (variant === 'compact') {
+      return (
+        <Card
+          title={currentStepConfig?.title}
+          extra={
+            showProgress && (
+              <div style={{ minWidth: 100 }}>
+                <Text type="secondary">{Math.round(progress)}%</Text>
+                <Progress percent={progress} size="small" />
+              </div>
+            )
+          }
+        >
+          {currentStepConfig?.description && (
+            <Text type="secondary">{currentStepConfig.description}</Text>
+          )}
+          <Divider />
+          {currentStepConfig?.content}
+        </Card>
+      );
+    }
+
+    if (variant === 'expanded') {
+      return (
+        <Collapse ghost>
+          {steps.map((step, index) => (
+            <Panel
+              key={step.key}
+              header={
+                <Space>
+                  <Tag
+                    color={
+                      stepStatuses[index] === 'completed' ? 'success' :
+                      stepStatuses[index] === 'active' ? 'processing' :
+                      stepStatuses[index] === 'error' ? 'error' : 'default'
+                    }
+                  >
+                    {index + 1}
+                  </Tag>
+                  <span>{step.title}</span>
+                  {stepStatuses[index] === 'completed' && <CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                  {stepStatuses[index] === 'error' && <CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
+                </Space>
+              }
+              active={stepStatuses[index] === 'active'}
+            >
+              {step.description && <Text type="secondary">{step.description}</Text>}
+              {step.content}
+            </Panel>
+          ))}
+        </Collapse>
+      );
+    }
+
+    // Standard variant
+    return (
+      <div>
+        <Steps
+          current={currentStep}
+          direction={orientation}
+          style={{ marginBottom: 24 }}
+        >
+          {steps.map((step, index) => (
+            <Steps.Step
+              key={step.key}
+              title={step.title}
+              description={step.description}
+              status={
+                stepStatuses[index] === 'completed' ? 'finish' :
+                stepStatuses[index] === 'active' ? 'process' :
+                stepStatuses[index] === 'error' ? 'error' : 'wait'
+              }
+              icon={step.icon}
+              onClick={() => allowStepNavigation && handleStepClick(index)}
+              style={{ cursor: allowStepNavigation ? 'pointer' : 'default' }}
+            />
+          ))}
+        </Steps>
+
+        <Card>
+          <Title level={4}>{currentStepConfig?.title}</Title>
+          {currentStepConfig?.description && (
+            <Text type="secondary">{currentStepConfig.description}</Text>
+          )}
+          <Divider />
+          {currentStepConfig?.content}
+        </Card>
+      </div>
+    );
+  };
+
+  return (
+    <div className={className}>
+      {showProgress && variant !== 'compact' && (
+        <div style={{ marginBottom: 24 }}>
+          <Row justify="space-between" style={{ marginBottom: 8 }}>
+            <Text>Step {currentStep + 1} of {steps.length}</Text>
+            <Text>{Math.round(progress)}% Complete</Text>
+          </Row>
+          <Progress percent={progress} />
+        </div>
+      )}
+
+      {renderStepContent()}
+
+      <Row justify="space-between" style={{ marginTop: 24 }}>
+        <Space>
+          {onCancel && (
+            <Button onClick={onCancel} disabled={isSubmitting || disabled}>
+              {cancelText}
+            </Button>
+          )}
+          {allowSaveProgress && (
+            <Button
+              onClick={saveProgress}
+              loading={isSaving}
+              disabled={disabled}
+              icon={<SaveOutlined />}
+            >
+              {saveText}
+            </Button>
+          )}
+        </Space>
+
+        <Space>
+          <Button
+            onClick={handleBack}
+            disabled={isFirstStep || isSubmitting || disabled}
+            icon={<LeftOutlined />}
+          >
+            {backText}
+          </Button>
+
+          {isLastStep ? (
+            <Button
+              type="primary"
+              onClick={handleSubmit}
+              loading={isSubmitting || loading}
+              disabled={disabled}
+            >
+              {submitText}
+            </Button>
+          ) : (
+            <Button
+              type="primary"
+              onClick={handleNext}
+              disabled={isSubmitting || loading || disabled}
+              icon={<RightOutlined />}
+              iconPosition="end"
+            >
+              {nextText}
+            </Button>
+          )}
+        </Space>
+      </Row>
+    </div>
+  );{{/isAntDesign}}
+};

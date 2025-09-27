@@ -1,0 +1,779 @@
+{{#hasTypeScript}}import React, { useState, useEffect } from 'react';{{/hasTypeScript}}{{^hasTypeScript}}import React, { useState, useEffect } from 'react';{{/hasTypeScript}}
+{{#isMaterialUI}}
+import {
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Paper,
+  Avatar,
+  IconButton,
+  Chip,
+  LinearProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Button,
+  Divider,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  ListItemSecondaryAction,
+} from '@mui/material';
+import {
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
+  People as PeopleIcon,
+  Assessment as AssessmentIcon,
+  AttachMoney as MoneyIcon,
+  Notifications as NotificationsIcon,
+  MoreVert as MoreVertIcon,
+  CheckCircle as CheckCircleIcon,
+  Warning as WarningIcon,
+  Error as ErrorIcon,
+} from '@mui/icons-material';{{/isMaterialUI}}
+{{#isAntDesign}}
+import {
+  Row,
+  Col,
+  Card,
+  Statistic,
+  Typography,
+  Progress,
+  Table,
+  Avatar,
+  Tag,
+  Button,
+  List,
+  Badge,
+  Space,
+  Divider,
+  Empty,
+} from 'antd';
+import {
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+  UserOutlined,
+  DollarCircleOutlined,
+  ShoppingCartOutlined,
+  EyeOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ExclamationCircleOutlined,
+  MoreOutlined,
+} from '@ant-design/icons';
+
+const { Title, Text } = Typography;{{/isAntDesign}}
+import { useAuth } from '../../contexts/AuthContext';
+import { useNotification } from '../../contexts/NotificationContext';
+import { Loading } from '../../components/common/Loading';
+
+{{#hasTypeScript}}
+interface DashboardStats {
+  totalUsers: number;
+  totalRevenue: number;
+  totalOrders: number;
+  activeUsers: number;
+  userGrowth: number;
+  revenueGrowth: number;
+  ordersGrowth: number;
+  activeGrowth: number;
+}
+
+interface RecentActivity {
+  id: string;
+  type: 'user' | 'order' | 'system';
+  title: string;
+  description: string;
+  timestamp: string;
+  status: 'success' | 'warning' | 'error' | 'info';
+  user?: {
+    name: string;
+    avatar?: string;
+  };
+}
+
+interface TopPerformer {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  role: string;
+  performance: number;
+  trend: 'up' | 'down' | 'stable';
+}
+
+interface SystemHealth {
+  cpu: number;
+  memory: number;
+  storage: number;
+  network: number;
+  status: 'healthy' | 'warning' | 'critical';
+}
+{{/hasTypeScript}}
+
+{{#hasTypeScript}}export const DashboardPage: React.FC = () => {{{/hasTypeScript}}{{^hasTypeScript}}export const DashboardPage = () => {{{/hasTypeScript}}
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState{{#hasTypeScript}}<DashboardStats | null>{{/hasTypeScript}}(null);
+  const [activities, setActivities] = useState{{#hasTypeScript}}<RecentActivity[]>{{/hasTypeScript}}([]);
+  const [performers, setPerformers] = useState{{#hasTypeScript}}<TopPerformer[]>{{/hasTypeScript}}([]);
+  const [systemHealth, setSystemHealth] = useState{{#hasTypeScript}}<SystemHealth | null>{{/hasTypeScript}}(null);
+
+  const { user } = useAuth();
+  const { success } = useNotification();
+
+  // Simulated data loading
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        // Simulate API calls
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Mock data
+        setStats({
+          totalUsers: 12847,
+          totalRevenue: 847392,
+          totalOrders: 3429,
+          activeUsers: 1847,
+          userGrowth: 12.5,
+          revenueGrowth: 8.3,
+          ordersGrowth: -2.1,
+          activeGrowth: 15.7,
+        });
+
+        setActivities([
+          {
+            id: '1',
+            type: 'user',
+            title: 'New user registration',
+            description: 'John Doe joined the platform',
+            timestamp: '2 minutes ago',
+            status: 'success',
+            user: { name: 'John Doe', avatar: 'https://i.pravatar.cc/40?img=1' },
+          },
+          {
+            id: '2',
+            type: 'order',
+            title: 'Large order placed',
+            description: 'Order #12847 worth $2,847',
+            timestamp: '5 minutes ago',
+            status: 'info',
+            user: { name: 'Sarah Wilson', avatar: 'https://i.pravatar.cc/40?img=2' },
+          },
+          {
+            id: '3',
+            type: 'system',
+            title: 'System maintenance',
+            description: 'Scheduled maintenance completed',
+            timestamp: '15 minutes ago',
+            status: 'success',
+          },
+          {
+            id: '4',
+            type: 'user',
+            title: 'Failed login attempt',
+            description: 'Multiple failed login attempts detected',
+            timestamp: '1 hour ago',
+            status: 'warning',
+          },
+        ]);
+
+        setPerformers([
+          {
+            id: '1',
+            name: 'Alice Johnson',
+            email: 'alice@company.com',
+            avatar: 'https://i.pravatar.cc/40?img=3',
+            role: 'Sales Manager',
+            performance: 95,
+            trend: 'up',
+          },
+          {
+            id: '2',
+            name: 'Bob Smith',
+            email: 'bob@company.com',
+            avatar: 'https://i.pravatar.cc/40?img=4',
+            role: 'Developer',
+            performance: 87,
+            trend: 'up',
+          },
+          {
+            id: '3',
+            name: 'Carol White',
+            email: 'carol@company.com',
+            avatar: 'https://i.pravatar.cc/40?img=5',
+            role: 'Marketing Lead',
+            performance: 92,
+            trend: 'stable',
+          },
+        ]);
+
+        setSystemHealth({
+          cpu: 67,
+          memory: 82,
+          storage: 45,
+          network: 91,
+          status: 'healthy',
+        });
+
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, []);
+
+  if (loading) {
+    return <Loading message="Loading dashboard..." fullScreen />;
+  }
+
+  const getStatusColor = (status{{#hasTypeScript}}: string{{/hasTypeScript}}) => {
+    switch (status) {
+      case 'success': return 'success';
+      case 'warning': return 'warning';
+      case 'error': return 'error';
+      default: return 'info';
+    }
+  };
+
+  const getStatusIcon = (status{{#hasTypeScript}}: string{{/hasTypeScript}}) => {
+    switch (status) {
+      case 'success': return {{#isMaterialUI}}<CheckCircleIcon />{{/isMaterialUI}}{{#isAntDesign}}<CheckCircleOutlined />{{/isAntDesign}};
+      case 'warning': return {{#isMaterialUI}}<WarningIcon />{{/isMaterialUI}}{{#isAntDesign}}<ExclamationCircleOutlined />{{/isAntDesign}};
+      case 'error': return {{#isMaterialUI}}<ErrorIcon />{{/isMaterialUI}}{{#isAntDesign}}<CloseCircleOutlined />{{/isAntDesign}};
+      default: return {{#isMaterialUI}}<NotificationsIcon />{{/isMaterialUI}}{{#isAntDesign}}<EyeOutlined />{{/isAntDesign}};
+    }
+  };
+
+  {{#isMaterialUI}}
+  return (
+    <Box sx={{ flexGrow: 1 }}>
+      {/* Welcome Section */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" gutterBottom>
+          Welcome back, {user?.name}! 👋
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Here's what's happening with your business today.
+        </Typography>
+      </Box>
+
+      {/* Stats Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
+                  <PeopleIcon />
+                </Avatar>
+                <Typography variant="h6">Total Users</Typography>
+              </Box>
+              <Typography variant="h4" gutterBottom>
+                {stats?.totalUsers.toLocaleString()}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                {(stats?.userGrowth || 0) >= 0 ? (
+                  <TrendingUpIcon sx={{ color: 'success.main', mr: 0.5 }} />
+                ) : (
+                  <TrendingDownIcon sx={{ color: 'error.main', mr: 0.5 }} />
+                )}
+                <Typography
+                  variant="body2"
+                  color={(stats?.userGrowth || 0) >= 0 ? 'success.main' : 'error.main'}
+                >
+                  {Math.abs(stats?.userGrowth || 0)}% from last month
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Avatar sx={{ bgcolor: 'success.main', mr: 2 }}>
+                  <MoneyIcon />
+                </Avatar>
+                <Typography variant="h6">Revenue</Typography>
+              </Box>
+              <Typography variant="h4" gutterBottom>
+                ${stats?.totalRevenue.toLocaleString()}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                {(stats?.revenueGrowth || 0) >= 0 ? (
+                  <TrendingUpIcon sx={{ color: 'success.main', mr: 0.5 }} />
+                ) : (
+                  <TrendingDownIcon sx={{ color: 'error.main', mr: 0.5 }} />
+                )}
+                <Typography
+                  variant="body2"
+                  color={(stats?.revenueGrowth || 0) >= 0 ? 'success.main' : 'error.main'}
+                >
+                  {Math.abs(stats?.revenueGrowth || 0)}% from last month
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Avatar sx={{ bgcolor: 'info.main', mr: 2 }}>
+                  <AssessmentIcon />
+                </Avatar>
+                <Typography variant="h6">Orders</Typography>
+              </Box>
+              <Typography variant="h4" gutterBottom>
+                {stats?.totalOrders.toLocaleString()}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                {(stats?.ordersGrowth || 0) >= 0 ? (
+                  <TrendingUpIcon sx={{ color: 'success.main', mr: 0.5 }} />
+                ) : (
+                  <TrendingDownIcon sx={{ color: 'error.main', mr: 0.5 }} />
+                )}
+                <Typography
+                  variant="body2"
+                  color={(stats?.ordersGrowth || 0) >= 0 ? 'success.main' : 'error.main'}
+                >
+                  {Math.abs(stats?.ordersGrowth || 0)}% from last month
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Avatar sx={{ bgcolor: 'warning.main', mr: 2 }}>
+                  <PeopleIcon />
+                </Avatar>
+                <Typography variant="h6">Active Users</Typography>
+              </Box>
+              <Typography variant="h4" gutterBottom>
+                {stats?.activeUsers.toLocaleString()}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                {(stats?.activeGrowth || 0) >= 0 ? (
+                  <TrendingUpIcon sx={{ color: 'success.main', mr: 0.5 }} />
+                ) : (
+                  <TrendingDownIcon sx={{ color: 'error.main', mr: 0.5 }} />
+                )}
+                <Typography
+                  variant="body2"
+                  color={(stats?.activeGrowth || 0) >= 0 ? 'success.main' : 'error.main'}
+                >
+                  {Math.abs(stats?.activeGrowth || 0)}% from last month
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Content Grid */}
+      <Grid container spacing={3}>
+        {/* Recent Activity */}
+        <Grid item xs={12} md={8}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Recent Activity
+              </Typography>
+              <List>
+                {activities.map((activity, index) => (
+                  <React.Fragment key={activity.id}>
+                    <ListItem>
+                      <ListItemAvatar>
+                        {activity.user?.avatar ? (
+                          <Avatar src={activity.user.avatar} />
+                        ) : (
+                          <Avatar sx={{ bgcolor: `${getStatusColor(activity.status)}.main` }}>
+                            {getStatusIcon(activity.status)}
+                          </Avatar>
+                        )}
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={activity.title}
+                        secondary={
+                          <Box>
+                            <Typography variant="body2" color="text.secondary">
+                              {activity.description}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {activity.timestamp}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                      <ListItemSecondaryAction>
+                        <Chip
+                          label={activity.status}
+                          color={getStatusColor(activity.status)}
+                          size="small"
+                        />
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                    {index < activities.length - 1 && <Divider />}
+                  </React.Fragment>
+                ))}
+              </List>
+              <Box sx={{ mt: 2, textAlign: 'center' }}>
+                <Button variant="outlined">View All Activities</Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* System Health & Top Performers */}
+        <Grid item xs={12} md={4}>
+          <Grid container spacing={3}>
+            {/* System Health */}
+            <Grid item xs={12}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    System Health
+                  </Typography>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" gutterBottom>
+                      CPU Usage
+                    </Typography>
+                    <LinearProgress
+                      variant="determinate"
+                      value={systemHealth?.cpu || 0}
+                      sx={{ mb: 1 }}
+                    />
+                    <Typography variant="caption">
+                      {systemHealth?.cpu}%
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" gutterBottom>
+                      Memory Usage
+                    </Typography>
+                    <LinearProgress
+                      variant="determinate"
+                      value={systemHealth?.memory || 0}
+                      color="warning"
+                      sx={{ mb: 1 }}
+                    />
+                    <Typography variant="caption">
+                      {systemHealth?.memory}%
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" gutterBottom>
+                      Storage
+                    </Typography>
+                    <LinearProgress
+                      variant="determinate"
+                      value={systemHealth?.storage || 0}
+                      color="success"
+                      sx={{ mb: 1 }}
+                    />
+                    <Typography variant="caption">
+                      {systemHealth?.storage}%
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" gutterBottom>
+                      Network
+                    </Typography>
+                    <LinearProgress
+                      variant="determinate"
+                      value={systemHealth?.network || 0}
+                      color="info"
+                      sx={{ mb: 1 }}
+                    />
+                    <Typography variant="caption">
+                      {systemHealth?.network}%
+                    </Typography>
+                  </Box>
+                  <Chip
+                    label={systemHealth?.status}
+                    color={systemHealth?.status === 'healthy' ? 'success' : 'warning'}
+                    sx={{ mt: 1 }}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Top Performers */}
+            <Grid item xs={12}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Top Performers
+                  </Typography>
+                  <List dense>
+                    {performers.map((performer, index) => (
+                      <ListItem key={performer.id}>
+                        <ListItemAvatar>
+                          <Avatar src={performer.avatar}>
+                            {performer.name.charAt(0)}
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={performer.name}
+                          secondary={
+                            <Box>
+                              <Typography variant="caption" display="block">
+                                {performer.role}
+                              </Typography>
+                              <LinearProgress
+                                variant="determinate"
+                                value={performer.performance}
+                                size="small"
+                                sx={{ mt: 0.5 }}
+                              />
+                            </Box>
+                          }
+                        />
+                        <ListItemSecondaryAction>
+                          <Typography variant="caption">
+                            {performer.performance}%
+                          </Typography>
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                    ))}
+                  </List>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Grid>
+    </Box>
+  );{{/isMaterialUI}}
+
+  {{#isAntDesign}}
+  return (
+    <div>
+      {/* Welcome Section */}
+      <div style={{ marginBottom: 24 }}>
+        <Title level={2}>Welcome back, {user?.name}! 👋</Title>
+        <Text type="secondary">Here's what's happening with your business today.</Text>
+      </div>
+
+      {/* Stats Cards */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} md={6}>
+          <Card>
+            <Statistic
+              title="Total Users"
+              value={stats?.totalUsers}
+              precision={0}
+              valueStyle={{
+                color: (stats?.userGrowth || 0) >= 0 ? '#3f8600' : '#cf1322',
+              }}
+              prefix={<UserOutlined />}
+              suffix={
+                <div style={{ fontSize: 14 }}>
+                  {(stats?.userGrowth || 0) >= 0 ? (
+                    <ArrowUpOutlined />
+                  ) : (
+                    <ArrowDownOutlined />
+                  )}
+                  {Math.abs(stats?.userGrowth || 0)}%
+                </div>
+              }
+            />
+          </Card>
+        </Col>
+
+        <Col xs={24} sm={12} md={6}>
+          <Card>
+            <Statistic
+              title="Revenue"
+              value={stats?.totalRevenue}
+              precision={0}
+              valueStyle={{
+                color: (stats?.revenueGrowth || 0) >= 0 ? '#3f8600' : '#cf1322',
+              }}
+              prefix={<DollarCircleOutlined />}
+              suffix={
+                <div style={{ fontSize: 14 }}>
+                  {(stats?.revenueGrowth || 0) >= 0 ? (
+                    <ArrowUpOutlined />
+                  ) : (
+                    <ArrowDownOutlined />
+                  )}
+                  {Math.abs(stats?.revenueGrowth || 0)}%
+                </div>
+              }
+            />
+          </Card>
+        </Col>
+
+        <Col xs={24} sm={12} md={6}>
+          <Card>
+            <Statistic
+              title="Orders"
+              value={stats?.totalOrders}
+              precision={0}
+              valueStyle={{
+                color: (stats?.ordersGrowth || 0) >= 0 ? '#3f8600' : '#cf1322',
+              }}
+              prefix={<ShoppingCartOutlined />}
+              suffix={
+                <div style={{ fontSize: 14 }}>
+                  {(stats?.ordersGrowth || 0) >= 0 ? (
+                    <ArrowUpOutlined />
+                  ) : (
+                    <ArrowDownOutlined />
+                  )}
+                  {Math.abs(stats?.ordersGrowth || 0)}%
+                </div>
+              }
+            />
+          </Card>
+        </Col>
+
+        <Col xs={24} sm={12} md={6}>
+          <Card>
+            <Statistic
+              title="Active Users"
+              value={stats?.activeUsers}
+              precision={0}
+              valueStyle={{
+                color: (stats?.activeGrowth || 0) >= 0 ? '#3f8600' : '#cf1322',
+              }}
+              prefix={<EyeOutlined />}
+              suffix={
+                <div style={{ fontSize: 14 }}>
+                  {(stats?.activeGrowth || 0) >= 0 ? (
+                    <ArrowUpOutlined />
+                  ) : (
+                    <ArrowDownOutlined />
+                  )}
+                  {Math.abs(stats?.activeGrowth || 0)}%
+                </div>
+              }
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Content Grid */}
+      <Row gutter={[16, 16]}>
+        {/* Recent Activity */}
+        <Col xs={24} md={16}>
+          <Card title="Recent Activity">
+            <List
+              itemLayout="horizontal"
+              dataSource={activities}
+              renderItem={(activity) => (
+                <List.Item
+                  actions={[
+                    <Tag color={getStatusColor(activity.status)} key="status">
+                      {activity.status}
+                    </Tag>
+                  ]}
+                >
+                  <List.Item.Meta
+                    avatar={
+                      activity.user?.avatar ? (
+                        <Avatar src={activity.user.avatar} />
+                      ) : (
+                        <Avatar icon={getStatusIcon(activity.status)} />
+                      )
+                    }
+                    title={activity.title}
+                    description={
+                      <div>
+                        <div>{activity.description}</div>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          {activity.timestamp}
+                        </Text>
+                      </div>
+                    }
+                  />
+                </List.Item>
+              )}
+            />
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <Button type="default">View All Activities</Button>
+            </div>
+          </Card>
+        </Col>
+
+        {/* System Health & Top Performers */}
+        <Col xs={24} md={8}>
+          <Row gutter={[16, 16]}>
+            {/* System Health */}
+            <Col xs={24}>
+              <Card title="System Health">
+                <div style={{ marginBottom: 16 }}>
+                  <Text>CPU Usage</Text>
+                  <Progress percent={systemHealth?.cpu} size="small" />
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <Text>Memory Usage</Text>
+                  <Progress
+                    percent={systemHealth?.memory}
+                    status={systemHealth?.memory && systemHealth.memory > 80 ? 'exception' : 'normal'}
+                    size="small"
+                  />
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <Text>Storage</Text>
+                  <Progress percent={systemHealth?.storage} size="small" />
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <Text>Network</Text>
+                  <Progress percent={systemHealth?.network} size="small" />
+                </div>
+                <Tag color={systemHealth?.status === 'healthy' ? 'green' : 'orange'}>
+                  {systemHealth?.status}
+                </Tag>
+              </Card>
+            </Col>
+
+            {/* Top Performers */}
+            <Col xs={24}>
+              <Card title="Top Performers">
+                <List
+                  itemLayout="horizontal"
+                  dataSource={performers}
+                  renderItem={(performer) => (
+                    <List.Item>
+                      <List.Item.Meta
+                        avatar={<Avatar src={performer.avatar}>{performer.name.charAt(0)}</Avatar>}
+                        title={performer.name}
+                        description={
+                          <div>
+                            <div>{performer.role}</div>
+                            <Progress
+                              percent={performer.performance}
+                              size="small"
+                              style={{ marginTop: 4 }}
+                            />
+                          </div>
+                        }
+                      />
+                    </List.Item>
+                  )}
+                />
+              </Card>
+            </Col>
+          </Row>
+        </Col>
+      </Row>
+    </div>
+  );{{/isAntDesign}}
+};

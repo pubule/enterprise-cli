@@ -1,0 +1,71 @@
+{{#hasTypeScript}}import React from 'react';
+import ReactDOM from 'react-dom/client';{{/hasTypeScript}}{{^hasTypeScript}}import React from 'react';
+import ReactDOM from 'react-dom/client';{{/hasTypeScript}}
+{{#hasRedux}}
+import { Provider } from 'react-redux';
+import { store } from './store/store';{{/hasRedux}}
+{{#hasRouter}}
+import { BrowserRouter } from 'react-router-dom';{{/hasRouter}}
+{{#hasReactQuery}}
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';{{/hasReactQuery}}
+{{#isMaterialUI}}
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { theme } from './theme/theme';{{/isMaterialUI}}
+{{#isAntDesign}}
+import { ConfigProvider } from 'antd';
+import { theme } from './theme/theme';{{/isAntDesign}}
+import App from './App';
+import './index.css';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { LoadingProvider } from './contexts/LoadingContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+
+{{#hasReactQuery}}
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});{{/hasReactQuery}}
+
+{{#hasTypeScript}}const root = ReactDOM.createRoot(
+  document.getElementById('root') as HTMLElement
+);{{/hasTypeScript}}{{^hasTypeScript}}const root = ReactDOM.createRoot(
+  document.getElementById('root')
+);{{/hasTypeScript}}
+
+root.render(
+  <React.StrictMode>
+    <ErrorBoundary>
+      {{#hasReactQuery}}<QueryClientProvider client={queryClient}>{{/hasReactQuery}}
+        {{#hasRedux}}<Provider store={store}>{{/hasRedux}}
+          {{#hasRouter}}<BrowserRouter>{{/hasRouter}}
+            {{#isMaterialUI}}<ThemeProvider theme={theme}>
+              <CssBaseline />{{/isMaterialUI}}
+              {{#isAntDesign}}<ConfigProvider theme={theme}>{{/isAntDesign}}
+                <AuthProvider>
+                  <LoadingProvider>
+                    <NotificationProvider>
+                      <App />
+                    </NotificationProvider>
+                  </LoadingProvider>
+                </AuthProvider>
+              {{#isMaterialUI}}</ThemeProvider>{{/isMaterialUI}}
+              {{#isAntDesign}}</ConfigProvider>{{/isAntDesign}}
+            {{#hasRouter}}</BrowserRouter>{{/hasRouter}}
+          {{#hasRedux}}</Provider>{{/hasRedux}}
+        {{#hasReactQuery}}<ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>{{/hasReactQuery}}
+    </ErrorBoundary>
+  </React.StrictMode>
+);

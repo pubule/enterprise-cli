@@ -1,0 +1,375 @@
+{{#hasTypeScript}}import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';{{/hasTypeScript}}{{^hasTypeScript}}import React, { createContext, useContext, useReducer, useEffect } from 'react';{{/hasTypeScript}}
+import { authService } from '../services/authService';
+import { storageService } from '../services/storageService';
+
+{{#hasTypeScript}}
+// Types
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  roles: string[];
+  permissions: string[];
+  avatar?: string;
+  lastLoginAt?: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  token: string | null;
+  refreshToken: string | null;
+  loading: boolean;
+  error: string | null;
+  isAuthenticated: boolean;
+}
+
+export interface AuthContextType extends AuthState {
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<void>;
+  refreshAuthToken: () => Promise<void>;
+  clearError: () => void;
+  updateUser: (userData: Partial<User>) => void;
+  hasPermission: (permission: string) => boolean;
+  hasRole: (role: string) => boolean;
+}
+
+interface AuthAction {
+  type: string;
+  payload?: any;
+}
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+{{/hasTypeScript}}
+
+// Action types
+const AUTH_ACTIONS = {
+  LOADING: 'LOADING',
+  LOGIN_SUCCESS: 'LOGIN_SUCCESS',
+  LOGIN_FAILURE: 'LOGIN_FAILURE',
+  LOGOUT: 'LOGOUT',
+  REFRESH_TOKEN_SUCCESS: 'REFRESH_TOKEN_SUCCESS',
+  REFRESH_TOKEN_FAILURE: 'REFRESH_TOKEN_FAILURE',
+  UPDATE_USER: 'UPDATE_USER',
+  CLEAR_ERROR: 'CLEAR_ERROR',
+  SET_ERROR: 'SET_ERROR',
+};
+
+// Initial state
+{{#hasTypeScript}}const initialState: AuthState = {{{/hasTypeScript}}{{^hasTypeScript}}const initialState = {{{/hasTypeScript}}
+  user: null,
+  token: null,
+  refreshToken: null,
+  loading: true,
+  error: null,
+  isAuthenticated: false,
+};
+
+// Reducer
+{{#hasTypeScript}}function authReducer(state: AuthState, action: AuthAction): AuthState {{{/hasTypeScript}}{{^hasTypeScript}}function authReducer(state, action) {{{/hasTypeScript}}
+  switch (action.type) {
+    case AUTH_ACTIONS.LOADING:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case AUTH_ACTIONS.LOGIN_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        user: action.payload.user,
+        token: action.payload.token,
+        refreshToken: action.payload.refreshToken,
+        isAuthenticated: true,
+        error: null,
+      };
+
+    case AUTH_ACTIONS.LOGIN_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        user: null,
+        token: null,
+        refreshToken: null,
+        isAuthenticated: false,
+        error: action.payload,
+      };
+
+    case AUTH_ACTIONS.LOGOUT:
+      return {
+        ...state,
+        user: null,
+        token: null,
+        refreshToken: null,
+        isAuthenticated: false,
+        loading: false,
+        error: null,
+      };
+
+    case AUTH_ACTIONS.REFRESH_TOKEN_SUCCESS:
+      return {
+        ...state,
+        token: action.payload.token,
+        refreshToken: action.payload.refreshToken,
+        error: null,
+      };
+
+    case AUTH_ACTIONS.REFRESH_TOKEN_FAILURE:
+      return {
+        ...state,
+        user: null,
+        token: null,
+        refreshToken: null,
+        isAuthenticated: false,
+        error: action.payload,
+      };
+
+    case AUTH_ACTIONS.UPDATE_USER:
+      return {
+        ...state,
+        user: state.user ? { ...state.user, ...action.payload } : null,
+      };
+
+    case AUTH_ACTIONS.CLEAR_ERROR:
+      return {
+        ...state,
+        error: null,
+      };
+
+    case AUTH_ACTIONS.SET_ERROR:
+      return {
+        ...state,
+        error: action.payload,
+        loading: false,
+      };
+
+    default:
+      return state;
+  }
+}
+
+// Create context
+{{#hasTypeScript}}const AuthContext = createContext<AuthContextType | undefined>(undefined);{{/hasTypeScript}}{{^hasTypeScript}}const AuthContext = createContext();{{/hasTypeScript}}
+
+// Provider component
+{{#hasTypeScript}}export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {{{/hasTypeScript}}{{^hasTypeScript}}export const AuthProvider = ({ children }) => {{{/hasTypeScript}}
+  const [state, dispatch] = useReducer(authReducer, initialState);
+
+  // Initialize auth state from storage
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        dispatch({ type: AUTH_ACTIONS.LOADING });
+
+        const token = storageService.getToken();
+        const refreshToken = storageService.getRefreshToken();
+        const userData = storageService.getUser();
+
+        if (token && userData) {
+          // Verify token is still valid
+          try {
+            const user = await authService.verifyToken(token);
+            dispatch({
+              type: AUTH_ACTIONS.LOGIN_SUCCESS,
+              payload: {
+                user,
+                token,
+                refreshToken,
+              },
+            });
+          } catch (error) {
+            // Token is invalid, try to refresh
+            if (refreshToken) {
+              try {
+                const response = await authService.refreshToken(refreshToken);
+                dispatch({
+                  type: AUTH_ACTIONS.REFRESH_TOKEN_SUCCESS,
+                  payload: response,
+                });
+              } catch (refreshError) {
+                // Refresh failed, clear storage
+                storageService.clearAuth();
+                dispatch({
+                  type: AUTH_ACTIONS.LOGIN_FAILURE,
+                  payload: 'Session expired. Please login again.',
+                });
+              }
+            } else {
+              // No refresh token, clear storage
+              storageService.clearAuth();
+              dispatch({
+                type: AUTH_ACTIONS.LOGIN_FAILURE,
+                payload: 'Session expired. Please login again.',
+              });
+            }
+          }
+        } else {
+          // No stored auth data
+          dispatch({ type: AUTH_ACTIONS.LOGOUT });
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        dispatch({
+          type: AUTH_ACTIONS.SET_ERROR,
+          payload: 'Failed to initialize authentication',
+        });
+      }
+    };
+
+    initializeAuth();
+  }, []);
+
+  // Login function
+  const login = async (email{{#hasTypeScript}}: string{{/hasTypeScript}}, password{{#hasTypeScript}}: string{{/hasTypeScript}}) => {
+    try {
+      dispatch({ type: AUTH_ACTIONS.LOADING });
+
+      const response = await authService.login(email, password);
+
+      // Store auth data
+      storageService.setToken(response.token);
+      storageService.setRefreshToken(response.refreshToken);
+      storageService.setUser(response.user);
+
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_SUCCESS,
+        payload: response,
+      });
+    } catch (error) {
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_FAILURE,
+        payload: error.message || 'Login failed',
+      });
+      throw error;
+    }
+  };
+
+  // Logout function
+  const logout = async () => {
+    try {
+      // Call API to invalidate token
+      if (state.token) {
+        await authService.logout(state.token);
+      }
+    } catch (error) {
+      console.error('Logout API error:', error);
+    } finally {
+      // Clear storage and state regardless of API call result
+      storageService.clearAuth();
+      dispatch({ type: AUTH_ACTIONS.LOGOUT });
+    }
+  };
+
+  // Register function
+  const register = async (email{{#hasTypeScript}}: string{{/hasTypeScript}}, password{{#hasTypeScript}}: string{{/hasTypeScript}}, name{{#hasTypeScript}}: string{{/hasTypeScript}}) => {
+    try {
+      dispatch({ type: AUTH_ACTIONS.LOADING });
+
+      const response = await authService.register(email, password, name);
+
+      // Store auth data
+      storageService.setToken(response.token);
+      storageService.setRefreshToken(response.refreshToken);
+      storageService.setUser(response.user);
+
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_SUCCESS,
+        payload: response,
+      });
+    } catch (error) {
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_FAILURE,
+        payload: error.message || 'Registration failed',
+      });
+      throw error;
+    }
+  };
+
+  // Refresh token function
+  const refreshAuthToken = async () => {
+    if (!state.refreshToken) {
+      throw new Error('No refresh token available');
+    }
+
+    try {
+      const response = await authService.refreshToken(state.refreshToken);
+
+      // Update storage
+      storageService.setToken(response.token);
+      storageService.setRefreshToken(response.refreshToken);
+
+      dispatch({
+        type: AUTH_ACTIONS.REFRESH_TOKEN_SUCCESS,
+        payload: response,
+      });
+    } catch (error) {
+      // Refresh failed, logout user
+      storageService.clearAuth();
+      dispatch({
+        type: AUTH_ACTIONS.REFRESH_TOKEN_FAILURE,
+        payload: 'Session expired. Please login again.',
+      });
+      throw error;
+    }
+  };
+
+  // Clear error function
+  const clearError = () => {
+    dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+  };
+
+  // Update user function
+  const updateUser = (userData{{#hasTypeScript}}: Partial<User>{{/hasTypeScript}}) => {
+    dispatch({
+      type: AUTH_ACTIONS.UPDATE_USER,
+      payload: userData,
+    });
+
+    // Update storage
+    if (state.user) {
+      const updatedUser = { ...state.user, ...userData };
+      storageService.setUser(updatedUser);
+    }
+  };
+
+  // Permission checking
+  const hasPermission = (permission{{#hasTypeScript}}: string{{/hasTypeScript}}) => {
+    return state.user?.permissions?.includes(permission) || false;
+  };
+
+  // Role checking
+  const hasRole = (role{{#hasTypeScript}}: string{{/hasTypeScript}}) => {
+    return state.user?.roles?.includes(role) || false;
+  };
+
+  const value = {
+    ...state,
+    login,
+    logout,
+    register,
+    refreshAuthToken,
+    clearError,
+    updateUser,
+    hasPermission,
+    hasRole,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+// Hook to use auth context
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

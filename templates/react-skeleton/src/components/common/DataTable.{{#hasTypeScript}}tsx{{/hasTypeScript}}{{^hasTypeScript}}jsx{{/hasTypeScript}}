@@ -1,0 +1,747 @@
+{{#hasTypeScript}}import React, { useState, useCallback } from 'react';{{/hasTypeScript}}{{^hasTypeScript}}import React, { useState, useCallback } from 'react';{{/hasTypeScript}}
+{{#isMaterialUI}}
+import {
+  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  TableSortLabel,
+  Paper,
+  IconButton,
+  Button,
+  TextField,
+  Toolbar,
+  Typography,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress,
+  Chip,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  Checkbox,
+  Alert,
+} from '@mui/material';
+import {
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Add as AddIcon,
+  Search as SearchIcon,
+  Refresh as RefreshIcon,
+  MoreVert as MoreVertIcon,
+  FilterList as FilterIcon,
+  ViewColumn as ViewColumnIcon,
+  GetApp as ExportIcon,
+  Clear as ClearIcon,
+} from '@mui/icons-material';{{/isMaterialUI}}
+{{#isAntDesign}}
+import {
+  Table,
+  Button,
+  Input,
+  Space,
+  Tooltip,
+  Modal,
+  Typography,
+  Dropdown,
+  Tag,
+  Popconfirm,
+  Row,
+  Col,
+  Card,
+  Divider,
+  Select,
+  Checkbox,
+  Alert,
+} from 'antd';
+import {
+  EditOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  SearchOutlined,
+  ReloadOutlined,
+  MoreOutlined,
+  FilterOutlined,
+  ColumnHeightOutlined,
+  DownloadOutlined,
+  ClearOutlined,
+} from '@ant-design/icons';
+
+const { Search } = Input;
+const { Title } = Typography;{{/isAntDesign}}
+import { useCrud } from '../../hooks/useCrud';
+import { Loading } from './Loading';
+
+{{#hasTypeScript}}
+interface Column<T> {
+  key: string;
+  title: string;
+  dataIndex: keyof T;
+  width?: number | string;
+  sortable?: boolean;
+  filterable?: boolean;
+  render?: (value: any, record: T, index: number) => React.ReactNode;
+  align?: 'left' | 'center' | 'right';
+  fixed?: 'left' | 'right';
+  ellipsis?: boolean;
+}
+
+interface Action<T> {
+  key: string;
+  label: string;
+  icon?: React.ReactNode;
+  onClick: (record: T) => void;
+  disabled?: (record: T) => boolean;
+  visible?: (record: T) => boolean;
+  danger?: boolean;
+  confirm?: {
+    title: string;
+    description?: string;
+  };
+}
+
+interface DataTableProps<T> {
+  endpoint: string;
+  columns: Column<T>[];
+  title?: string;
+  actions?: Action<T>[];
+  rowKey?: keyof T;
+  searchPlaceholder?: string;
+  allowCreate?: boolean;
+  allowEdit?: boolean;
+  allowDelete?: boolean;
+  allowExport?: boolean;
+  allowRefresh?: boolean;
+  allowColumnToggle?: boolean;
+  renderCreateForm?: () => React.ReactNode;
+  renderEditForm?: (record: T) => React.ReactNode;
+  onCreateClick?: () => void;
+  onEditClick?: (record: T) => void;
+  onDeleteClick?: (record: T) => void;
+  rowSelection?: boolean;
+  onRowSelectionChange?: (selectedRows: T[]) => void;
+  extraToolbarActions?: React.ReactNode;
+  filters?: Record<string, any>;
+  defaultPageSize?: number;
+  emptyText?: string;
+  className?: string;
+  size?: 'small' | 'medium' | 'large';
+}
+{{/hasTypeScript}}
+
+{{#hasTypeScript}}export const DataTable = <T extends { id: string | number }>({{{/hasTypeScript}}{{^hasTypeScript}}export const DataTable = ({{{/hasTypeScript}}
+  endpoint,
+  columns,
+  title,
+  actions = [],
+  rowKey = 'id',
+  searchPlaceholder = 'Search...',
+  allowCreate = true,
+  allowEdit = true,
+  allowDelete = true,
+  allowExport = false,
+  allowRefresh = true,
+  allowColumnToggle = false,
+  renderCreateForm,
+  renderEditForm,
+  onCreateClick,
+  onEditClick,
+  onDeleteClick,
+  rowSelection = false,
+  onRowSelectionChange,
+  extraToolbarActions,
+  filters = {},
+  defaultPageSize = 10,
+  emptyText = 'No data available',
+  className,
+  size = 'medium',
+}) => {
+  const {
+    data,
+    loading,
+    error,
+    total,
+    page,
+    pageSize,
+    fetchAll,
+    create,
+    update,
+    delete: deleteItem,
+    refresh,
+    setPage,
+    setPageSize,
+    search,
+    sort,
+  } = useCrud{{#hasTypeScript}}<T>{{/hasTypeScript}}(endpoint, {
+    initialPageSize: defaultPageSize,
+    autoFetch: true,
+  });
+
+  const [searchValue, setSearchValue] = useState('');
+  const [selectedRows, setSelectedRows] = useState{{#hasTypeScript}}<T[]>{{/hasTypeScript}}([]);
+  const [visibleColumns, setVisibleColumns] = useState{{#hasTypeScript}}<string[]>{{/hasTypeScript}}(
+    columns.map(col => col.key)
+  );
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState{{#hasTypeScript}}<T | null>{{/hasTypeScript}}(null);
+  const [actionMenuAnchor, setActionMenuAnchor] = useState{{#hasTypeScript}}<HTMLElement | null>{{/hasTypeScript}}(null);
+  const [activeRecord, setActiveRecord] = useState{{#hasTypeScript}}<T | null>{{/hasTypeScript}}(null);
+
+  // Handle search
+  const handleSearch = useCallback((value{{#hasTypeScript}}: string{{/hasTypeScript}}) => {
+    setSearchValue(value);
+    search(value);
+  }, [search]);
+
+  // Handle sort
+  const handleSort = useCallback((field{{#hasTypeScript}}: string{{/hasTypeScript}}, direction{{#hasTypeScript}}: 'asc' | 'desc'{{/hasTypeScript}}) => {
+    sort(field, direction);
+  }, [sort]);
+
+  // Handle pagination
+  const handlePageChange = useCallback((newPage{{#hasTypeScript}}: number{{/hasTypeScript}}) => {
+    setPage(newPage);
+  }, [setPage]);
+
+  const handlePageSizeChange = useCallback((newPageSize{{#hasTypeScript}}: number{{/hasTypeScript}}) => {
+    setPageSize(newPageSize);
+  }, [setPageSize]);
+
+  // Handle row selection
+  const handleRowSelectionChange = useCallback((rows{{#hasTypeScript}}: T[]{{/hasTypeScript}}) => {
+    setSelectedRows(rows);
+    onRowSelectionChange?.(rows);
+  }, [onRowSelectionChange]);
+
+  // Handle delete confirmation
+  const handleDeleteClick = useCallback((record{{#hasTypeScript}}: T{{/hasTypeScript}}) => {
+    setItemToDelete(record);
+    setDeleteDialogOpen(true);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (itemToDelete) {
+      const success = await deleteItem(itemToDelete[rowKey]{{#hasTypeScript}} as string | number{{/hasTypeScript}});
+      if (success) {
+        setDeleteDialogOpen(false);
+        setItemToDelete(null);
+        onDeleteClick?.(itemToDelete);
+      }
+    }
+  }, [itemToDelete, deleteItem, rowKey, onDeleteClick]);
+
+  // Handle action menu
+  const handleActionMenuClick = useCallback((event{{#hasTypeScript}}: React.MouseEvent<HTMLElement>{{/hasTypeScript}}, record{{#hasTypeScript}}: T{{/hasTypeScript}}) => {
+    setActionMenuAnchor(event.currentTarget);
+    setActiveRecord(record);
+  }, []);
+
+  const handleActionMenuClose = useCallback(() => {
+    setActionMenuAnchor(null);
+    setActiveRecord(null);
+  }, []);
+
+  // Handle column visibility
+  const handleColumnToggle = useCallback((columnKey{{#hasTypeScript}}: string{{/hasTypeScript}}) => {
+    setVisibleColumns(prev =>
+      prev.includes(columnKey)
+        ? prev.filter(key => key !== columnKey)
+        : [...prev, columnKey]
+    );
+  }, []);
+
+  // Handle export
+  const handleExport = useCallback(() => {
+    // Basic CSV export
+    const headers = columns
+      .filter(col => visibleColumns.includes(col.key))
+      .map(col => col.title)
+      .join(',');
+
+    const rows = data.map(row =>
+      columns
+        .filter(col => visibleColumns.includes(col.key))
+        .map(col => {
+          const value = row[col.dataIndex];
+          return typeof value === 'string' ? `"${value}"` : value;
+        })
+        .join(',')
+    );
+
+    const csv = [headers, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title || 'data'}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }, [data, columns, visibleColumns, title]);
+
+  // Filter visible columns
+  const visibleColumnsData = columns.filter(col => visibleColumns.includes(col.key));
+
+  // Add action column if needed
+  const finalColumns = [...visibleColumnsData];
+  if ((allowEdit || allowDelete || actions.length > 0) && !finalColumns.find(col => col.key === 'actions')) {
+    finalColumns.push({
+      key: 'actions',
+      title: 'Actions',
+      dataIndex: 'actions'{{#hasTypeScript}} as keyof T{{/hasTypeScript}},
+      width: {{#isMaterialUI}}120{{/isMaterialUI}}{{#isAntDesign}}100{{/isAntDesign}},
+      align: 'center',
+      render: (_, record) => (
+        {{#isMaterialUI}}<Box sx={{ display: 'flex', gap: 0.5 }}>
+          {allowEdit && (
+            <Tooltip title="Edit">
+              <IconButton
+                size="small"
+                onClick={() => onEditClick?.(record)}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          {allowDelete && (
+            <Tooltip title="Delete">
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => handleDeleteClick(record)}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          {actions.length > 0 && (
+            <Tooltip title="More actions">
+              <IconButton
+                size="small"
+                onClick={(e) => handleActionMenuClick(e, record)}
+              >
+                <MoreVertIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>{{/isMaterialUI}}
+        {{#isAntDesign}}<Space>
+          {allowEdit && (
+            <Button
+              type="text"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => onEditClick?.(record)}
+            />
+          )}
+          {allowDelete && (
+            <Popconfirm
+              title="Are you sure you want to delete this item?"
+              onConfirm={() => handleDeleteClick(record)}
+              okText="Yes"
+              cancelText="No"
+            >
+              <Button
+                type="text"
+                size="small"
+                danger
+                icon={<DeleteOutlined />}
+              />
+            </Popconfirm>
+          )}
+          {actions.length > 0 && (
+            <Dropdown
+              menu={{
+                items: actions
+                  .filter(action => action.visible?.(record) !== false)
+                  .map(action => ({
+                    key: action.key,
+                    label: action.label,
+                    icon: action.icon,
+                    danger: action.danger,
+                    disabled: action.disabled?.(record),
+                    onClick: () => action.onClick(record),
+                  })),
+              }}
+              trigger={['click']}
+            >
+              <Button type="text" size="small" icon={<MoreOutlined />} />
+            </Dropdown>
+          )}
+        </Space>{{/isAntDesign}}
+      ),
+    });
+  }
+
+  if (error) {
+    return (
+      {{#isMaterialUI}}<Alert severity="error" sx={{ mt: 2 }}>
+        {error}
+        <Button onClick={refresh} sx={{ ml: 2 }}>
+          Retry
+        </Button>
+      </Alert>{{/isMaterialUI}}
+      {{#isAntDesign}}<Alert
+        message="Error"
+        description={error}
+        type="error"
+        showIcon
+        action={
+          <Button size="small" onClick={refresh}>
+            Retry
+          </Button>
+        }
+      />{{/isAntDesign}}
+    );
+  }
+
+  {{#isMaterialUI}}
+  return (
+    <Paper className={className} sx={{ width: '100%', overflow: 'hidden' }}>
+      {/* Toolbar */}
+      <Toolbar sx={{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 } }}>
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          {title}
+        </Typography>
+
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          {/* Search */}
+          <TextField
+            size="small"
+            placeholder={searchPlaceholder}
+            value={searchValue}
+            onChange={(e) => handleSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+              endAdornment: searchValue && (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={() => handleSearch('')}
+                  >
+                    <ClearIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{ minWidth: 200 }}
+          />
+
+          {/* Extra actions */}
+          {extraToolbarActions}
+
+          {/* Column toggle */}
+          {allowColumnToggle && (
+            <Tooltip title="Toggle columns">
+              <IconButton>
+                <ViewColumnIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+
+          {/* Export */}
+          {allowExport && (
+            <Tooltip title="Export">
+              <IconButton onClick={handleExport}>
+                <ExportIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+
+          {/* Refresh */}
+          {allowRefresh && (
+            <Tooltip title="Refresh">
+              <IconButton onClick={refresh}>
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+
+          {/* Create */}
+          {allowCreate && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onCreateClick}
+            >
+              Create
+            </Button>
+          )}
+        </Box>
+      </Toolbar>
+
+      {/* Table */}
+      <TableContainer>
+        <Table size={size === 'small' ? 'small' : 'medium'}>
+          <TableHead>
+            <TableRow>
+              {rowSelection && (
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    indeterminate={
+                      selectedRows.length > 0 && selectedRows.length < data.length
+                    }
+                    checked={data.length > 0 && selectedRows.length === data.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        handleRowSelectionChange(data);
+                      } else {
+                        handleRowSelectionChange([]);
+                      }
+                    }}
+                  />
+                </TableCell>
+              )}
+              {finalColumns.map((column) => (
+                <TableCell
+                  key={column.key}
+                  align={column.align || 'left'}
+                  style={{ width: column.width }}
+                >
+                  {column.sortable ? (
+                    <TableSortLabel
+                      onClick={() => handleSort(column.key, 'asc')}
+                    >
+                      {column.title}
+                    </TableSortLabel>
+                  ) : (
+                    column.title
+                  )}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={finalColumns.length + (rowSelection ? 1 : 0)} align="center">
+                  <Box sx={{ py: 4 }}>
+                    <CircularProgress />
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ) : data.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={finalColumns.length + (rowSelection ? 1 : 0)} align="center">
+                  <Box sx={{ py: 4 }}>
+                    <Typography color="text.secondary">{emptyText}</Typography>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ) : (
+              data.map((row, index) => (
+                <TableRow key={row[rowKey]{{#hasTypeScript}} as string{{/hasTypeScript}}} hover>
+                  {rowSelection && (
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={selectedRows.some(selected => selected[rowKey] === row[rowKey])}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            handleRowSelectionChange([...selectedRows, row]);
+                          } else {
+                            handleRowSelectionChange(
+                              selectedRows.filter(selected => selected[rowKey] !== row[rowKey])
+                            );
+                          }
+                        }}
+                      />
+                    </TableCell>
+                  )}
+                  {finalColumns.map((column) => (
+                    <TableCell
+                      key={column.key}
+                      align={column.align || 'left'}
+                      style={{
+                        overflow: column.ellipsis ? 'hidden' : 'visible',
+                        textOverflow: column.ellipsis ? 'ellipsis' : 'initial',
+                        whiteSpace: column.ellipsis ? 'nowrap' : 'initial',
+                      }}
+                    >
+                      {column.render
+                        ? column.render(row[column.dataIndex], row, index)
+                        : row[column.dataIndex]{{#hasTypeScript}} as React.ReactNode{{/hasTypeScript}}}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* Pagination */}
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25, 50, 100]}
+        component="div"
+        count={total}
+        rowsPerPage={pageSize}
+        page={page - 1}
+        onPageChange={(_, newPage) => handlePageChange(newPage + 1)}
+        onRowsPerPageChange={(e) => handlePageSizeChange(parseInt(e.target.value, 10))}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          Are you sure you want to delete this item? This action cannot be undone.
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Action Menu */}
+      <Menu
+        anchorEl={actionMenuAnchor}
+        open={Boolean(actionMenuAnchor)}
+        onClose={handleActionMenuClose}
+      >
+        {actions
+          .filter(action => activeRecord && action.visible?.(activeRecord) !== false)
+          .map((action) => (
+            <MenuItem
+              key={action.key}
+              onClick={() => {
+                if (activeRecord) {
+                  action.onClick(activeRecord);
+                }
+                handleActionMenuClose();
+              }}
+              disabled={activeRecord ? action.disabled?.(activeRecord) : false}
+            >
+              {action.icon && <ListItemIcon>{action.icon}</ListItemIcon>}
+              <ListItemText>{action.label}</ListItemText>
+            </MenuItem>
+          ))}
+      </Menu>
+    </Paper>
+  );{{/isMaterialUI}}
+
+  {{#isAntDesign}}
+  const tableColumns = finalColumns.map(column => ({
+    key: column.key,
+    title: column.title,
+    dataIndex: column.dataIndex,
+    width: column.width,
+    align: column.align,
+    fixed: column.fixed,
+    ellipsis: column.ellipsis,
+    sorter: column.sortable ? (a, b) => {
+      const aVal = a[column.dataIndex];
+      const bVal = b[column.dataIndex];
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return aVal.localeCompare(bVal);
+      }
+      return aVal - bVal;
+    } : undefined,
+    render: column.render || ((value) => value),
+  }));
+
+  const rowSelectionConfig = rowSelection ? {
+    selectedRowKeys: selectedRows.map(row => row[rowKey]),
+    onChange: (selectedRowKeys, selectedRows) => {
+      handleRowSelectionChange(selectedRows);
+    },
+    onSelectAll: (selected, selectedRows, changeRows) => {
+      if (selected) {
+        handleRowSelectionChange([...selectedRows, ...changeRows]);
+      } else {
+        handleRowSelectionChange(
+          selectedRows.filter(row => !changeRows.find(change => change[rowKey] === row[rowKey]))
+        );
+      }
+    },
+  } : undefined;
+
+  return (
+    <Card className={className}>
+      {/* Toolbar */}
+      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+        <Col>
+          {title && <Title level={4}>{title}</Title>}
+        </Col>
+        <Col>
+          <Space>
+            {/* Search */}
+            <Search
+              placeholder={searchPlaceholder}
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              onSearch={handleSearch}
+              style={{ width: 200 }}
+              allowClear
+            />
+
+            {/* Extra actions */}
+            {extraToolbarActions}
+
+            {/* Export */}
+            {allowExport && (
+              <Button icon={<DownloadOutlined />} onClick={handleExport}>
+                Export
+              </Button>
+            )}
+
+            {/* Refresh */}
+            {allowRefresh && (
+              <Button icon={<ReloadOutlined />} onClick={refresh} />
+            )}
+
+            {/* Create */}
+            {allowCreate && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={onCreateClick}
+              >
+                Create
+              </Button>
+            )}
+          </Space>
+        </Col>
+      </Row>
+
+      {/* Table */}
+      <Table
+        columns={tableColumns}
+        dataSource={data}
+        rowKey={rowKey}
+        loading={loading}
+        pagination={{
+          current: page,
+          pageSize: pageSize,
+          total: total,
+          onChange: handlePageChange,
+          onShowSizeChange: (current, size) => handlePageSizeChange(size),
+          showSizeChanger: true,
+          showQuickJumper: true,
+          showTotal: (total, range) =>
+            `${range[0]}-${range[1]} of ${total} items`,
+        }}
+        rowSelection={rowSelectionConfig}
+        size={size}
+        locale={{ emptyText }}
+        scroll={{ x: 'max-content' }}
+      />
+    </Card>
+  );{{/isAntDesign}}
+};

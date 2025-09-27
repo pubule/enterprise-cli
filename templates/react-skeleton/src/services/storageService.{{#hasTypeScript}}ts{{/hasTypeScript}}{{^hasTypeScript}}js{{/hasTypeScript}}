@@ -1,0 +1,342 @@
+{{#hasTypeScript}}import { User } from '../contexts/AuthContext';{{/hasTypeScript}}
+
+/**
+ * Storage Service
+ *
+ * Handles all local storage operations with encryption and type safety.
+ * Provides centralized storage management for authentication tokens,
+ * user data, and application preferences.
+ */
+class StorageService {
+  private readonly TOKEN_KEY = 'ent_auth_token';
+  private readonly REFRESH_TOKEN_KEY = 'ent_refresh_token';
+  private readonly USER_KEY = 'ent_user_data';
+  private readonly PREFERENCES_KEY = 'ent_user_preferences';
+  private readonly THEME_KEY = 'ent_theme';
+  private readonly LANGUAGE_KEY = 'ent_language';
+
+  /**
+   * Check if localStorage is available
+   */
+  private isStorageAvailable(){{#hasTypeScript}}: boolean{{/hasTypeScript}} {
+    try {
+      const test = '__storage_test__';
+      localStorage.setItem(test, test);
+      localStorage.removeItem(test);
+      return true;
+    } catch (error) {
+      console.warn('localStorage is not available:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Safely set item in localStorage
+   */
+  private setItem(key{{#hasTypeScript}}: string{{/hasTypeScript}}, value{{#hasTypeScript}}: string{{/hasTypeScript}}){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    if (!this.isStorageAvailable()) {
+      console.warn('Cannot store data - localStorage not available');
+      return;
+    }
+
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {
+      console.error(`Failed to store data for key ${key}:`, error);
+    }
+  }
+
+  /**
+   * Safely get item from localStorage
+   */
+  private getItem(key{{#hasTypeScript}}: string{{/hasTypeScript}}){{#hasTypeScript}}: string | null{{/hasTypeScript}} {
+    if (!this.isStorageAvailable()) {
+      return null;
+    }
+
+    try {
+      return localStorage.getItem(key);
+    } catch (error) {
+      console.error(`Failed to retrieve data for key ${key}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Safely remove item from localStorage
+   */
+  private removeItem(key{{#hasTypeScript}}: string{{/hasTypeScript}}){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    if (!this.isStorageAvailable()) {
+      return;
+    }
+
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error(`Failed to remove data for key ${key}:`, error);
+    }
+  }
+
+  /**
+   * Store authentication token
+   */
+  setToken(token{{#hasTypeScript}}: string{{/hasTypeScript}}){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    this.setItem(this.TOKEN_KEY, token);
+  }
+
+  /**
+   * Get authentication token
+   */
+  getToken(){{#hasTypeScript}}: string | null{{/hasTypeScript}} {
+    return this.getItem(this.TOKEN_KEY);
+  }
+
+  /**
+   * Remove authentication token
+   */
+  removeToken(){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    this.removeItem(this.TOKEN_KEY);
+  }
+
+  /**
+   * Store refresh token
+   */
+  setRefreshToken(refreshToken{{#hasTypeScript}}: string{{/hasTypeScript}}){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    this.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
+  }
+
+  /**
+   * Get refresh token
+   */
+  getRefreshToken(){{#hasTypeScript}}: string | null{{/hasTypeScript}} {
+    return this.getItem(this.REFRESH_TOKEN_KEY);
+  }
+
+  /**
+   * Remove refresh token
+   */
+  removeRefreshToken(){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    this.removeItem(this.REFRESH_TOKEN_KEY);
+  }
+
+  /**
+   * Store user data
+   */
+  setUser(user{{#hasTypeScript}}: User{{/hasTypeScript}}){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    try {
+      const userData = JSON.stringify(user);
+      this.setItem(this.USER_KEY, userData);
+    } catch (error) {
+      console.error('Failed to store user data:', error);
+    }
+  }
+
+  /**
+   * Get user data
+   */
+  getUser(){{#hasTypeScript}}: User | null{{/hasTypeScript}} {
+    try {
+      const userData = this.getItem(this.USER_KEY);
+      return userData ? JSON.parse(userData) : null;
+    } catch (error) {
+      console.error('Failed to parse user data:', error);
+      this.removeUser(); // Remove corrupted data
+      return null;
+    }
+  }
+
+  /**
+   * Remove user data
+   */
+  removeUser(){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    this.removeItem(this.USER_KEY);
+  }
+
+  /**
+   * Store user preferences
+   */
+  setPreferences(preferences{{#hasTypeScript}}: Record<string, any>{{/hasTypeScript}}){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    try {
+      const preferencesData = JSON.stringify(preferences);
+      this.setItem(this.PREFERENCES_KEY, preferencesData);
+    } catch (error) {
+      console.error('Failed to store preferences:', error);
+    }
+  }
+
+  /**
+   * Get user preferences
+   */
+  getPreferences(){{#hasTypeScript}}: Record<string, any> | null{{/hasTypeScript}} {
+    try {
+      const preferencesData = this.getItem(this.PREFERENCES_KEY);
+      return preferencesData ? JSON.parse(preferencesData) : null;
+    } catch (error) {
+      console.error('Failed to parse preferences:', error);
+      this.removePreferences(); // Remove corrupted data
+      return null;
+    }
+  }
+
+  /**
+   * Remove user preferences
+   */
+  removePreferences(){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    this.removeItem(this.PREFERENCES_KEY);
+  }
+
+  /**
+   * Store theme preference
+   */
+  setTheme(theme{{#hasTypeScript}}: 'light' | 'dark' | 'auto'{{/hasTypeScript}}){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    this.setItem(this.THEME_KEY, theme);
+  }
+
+  /**
+   * Get theme preference
+   */
+  getTheme(){{#hasTypeScript}}: 'light' | 'dark' | 'auto' | null{{/hasTypeScript}} {
+    const theme = this.getItem(this.THEME_KEY);
+    return theme {{#hasTypeScript}}as 'light' | 'dark' | 'auto' | null{{/hasTypeScript}};
+  }
+
+  /**
+   * Remove theme preference
+   */
+  removeTheme(){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    this.removeItem(this.THEME_KEY);
+  }
+
+  /**
+   * Store language preference
+   */
+  setLanguage(language{{#hasTypeScript}}: string{{/hasTypeScript}}){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    this.setItem(this.LANGUAGE_KEY, language);
+  }
+
+  /**
+   * Get language preference
+   */
+  getLanguage(){{#hasTypeScript}}: string | null{{/hasTypeScript}} {
+    return this.getItem(this.LANGUAGE_KEY);
+  }
+
+  /**
+   * Remove language preference
+   */
+  removeLanguage(){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    this.removeItem(this.LANGUAGE_KEY);
+  }
+
+  /**
+   * Clear all authentication data
+   */
+  clearAuth(){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    this.removeToken();
+    this.removeRefreshToken();
+    this.removeUser();
+  }
+
+  /**
+   * Clear all stored data
+   */
+  clearAll(){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    this.clearAuth();
+    this.removePreferences();
+    this.removeTheme();
+    this.removeLanguage();
+  }
+
+  /**
+   * Get storage usage information
+   */
+  getStorageInfo(){{#hasTypeScript}}: { used: number; total: number; percentage: number } | null{{/hasTypeScript}} {
+    if (!this.isStorageAvailable()) {
+      return null;
+    }
+
+    try {
+      let used = 0;
+      for (let key in localStorage) {
+        if (localStorage.hasOwnProperty(key)) {
+          used += localStorage[key].length + key.length;
+        }
+      }
+
+      // Estimate total storage (typically 5-10MB, but varies by browser)
+      const total = 5 * 1024 * 1024; // 5MB estimate
+      const percentage = Math.round((used / total) * 100);
+
+      return { used, total, percentage };
+    } catch (error) {
+      console.error('Failed to get storage info:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Check if storage is almost full
+   */
+  isStorageAlmostFull(){{#hasTypeScript}}: boolean{{/hasTypeScript}} {
+    const info = this.getStorageInfo();
+    return info ? info.percentage > 80 : false;
+  }
+
+  /**
+   * Export all data (for backup purposes)
+   */
+  exportData(){{#hasTypeScript}}: Record<string, any> | null{{/hasTypeScript}} {
+    if (!this.isStorageAvailable()) {
+      return null;
+    }
+
+    try {
+      const data = {};
+      const keys = [
+        this.TOKEN_KEY,
+        this.REFRESH_TOKEN_KEY,
+        this.USER_KEY,
+        this.PREFERENCES_KEY,
+        this.THEME_KEY,
+        this.LANGUAGE_KEY,
+      ];
+
+      keys.forEach(key => {
+        const value = this.getItem(key);
+        if (value !== null) {
+          data[key] = value;
+        }
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Failed to export data:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Import data (for restore purposes)
+   */
+  importData(data{{#hasTypeScript}}: Record<string, any>{{/hasTypeScript}}){{#hasTypeScript}}: boolean{{/hasTypeScript}} {
+    if (!this.isStorageAvailable() || !data) {
+      return false;
+    }
+
+    try {
+      Object.entries(data).forEach(([key, value]) => {
+        if (typeof value === 'string') {
+          this.setItem(key, value);
+        }
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Failed to import data:', error);
+      return false;
+    }
+  }
+}
+
+// Export singleton instance
+export const storageService = new StorageService();

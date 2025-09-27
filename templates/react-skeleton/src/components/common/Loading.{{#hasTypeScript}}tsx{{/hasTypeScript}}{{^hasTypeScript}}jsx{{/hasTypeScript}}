@@ -1,0 +1,222 @@
+{{#hasTypeScript}}import React from 'react';{{/hasTypeScript}}{{^hasTypeScript}}import React from 'react';{{/hasTypeScript}}
+{{#isMaterialUI}}
+import {
+  Box,
+  CircularProgress,
+  Typography,
+  Backdrop,
+  useTheme,
+} from '@mui/material';{{/isMaterialUI}}
+{{#isAntDesign}}
+import { Spin, Typography } from 'antd';{{/isAntDesign}}
+
+{{#hasTypeScript}}
+interface LoadingProps {
+  size?: 'small' | 'medium' | 'large';
+  message?: string;
+  fullScreen?: boolean;
+  transparent?: boolean;
+  color?: 'primary' | 'secondary' | 'inherit';
+}
+{{/hasTypeScript}}
+
+{{#isMaterialUI}}
+{{#hasTypeScript}}export const Loading: React.FC<LoadingProps> = ({{{/hasTypeScript}}{{^hasTypeScript}}export const Loading = ({{{/hasTypeScript}}
+  size = 'medium',
+  message = 'Loading...',
+  fullScreen = false,
+  transparent = false,
+  color = 'primary',
+}) => {
+  const theme = useTheme();
+
+  const getSize = () => {
+    switch (size) {
+      case 'small':
+        return 20;
+      case 'large':
+        return 60;
+      default:
+        return 40;
+    }
+  };
+
+  const content = (
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      justifyContent="center"
+      gap={2}
+      p={3}
+    >
+      <CircularProgress
+        size={getSize()}
+        color={color}
+        thickness={4}
+      />
+      {message && (
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          textAlign="center"
+        >
+          {message}
+        </Typography>
+      )}
+    </Box>
+  );
+
+  if (fullScreen) {
+    return (
+      <Backdrop
+        open={true}
+        sx={{
+          color: '#fff',
+          zIndex: theme.zIndex.drawer + 1,
+          backgroundColor: transparent ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.7)',
+        }}
+      >
+        {content}
+      </Backdrop>
+    );
+  }
+
+  return (
+    <Box
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      minHeight={fullScreen ? '100vh' : 200}
+      width="100%"
+    >
+      {content}
+    </Box>
+  );
+};{{/isMaterialUI}}
+
+{{#isAntDesign}}
+{{#hasTypeScript}}export const Loading: React.FC<LoadingProps> = ({{{/hasTypeScript}}{{^hasTypeScript}}export const Loading = ({{{/hasTypeScript}}
+  size = 'default',
+  message = 'Loading...',
+  fullScreen = false,
+  transparent = false,
+}) => {
+  const spinSize = size === 'small' ? 'small' : size === 'large' ? 'large' : 'default';
+
+  const content = (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 16,
+        padding: 24,
+      }}
+    >
+      <Spin size={spinSize} />
+      {message && (
+        <Typography.Text type="secondary" style={{ textAlign: 'center' }}>
+          {message}
+        </Typography.Text>
+      )}
+    </div>
+  );
+
+  if (fullScreen) {
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: transparent ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.7)',
+          zIndex: 9999,
+        }}
+      >
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: fullScreen ? '100vh' : 200,
+        width: '100%',
+      }}
+    >
+      {content}
+    </div>
+  );
+};{{/isAntDesign}}
+
+// Inline loading spinner for small spaces
+{{#hasTypeScript}}export const InlineLoading: React.FC<{ size?: number }> = ({ size = 16 }) => ({{/hasTypeScript}}{{^hasTypeScript}}export const InlineLoading = ({ size = 16 }) => ({{/hasTypeScript}}
+  {{#isMaterialUI}}<CircularProgress size={size} thickness={6} />{{/isMaterialUI}}
+  {{#isAntDesign}}<Spin size="small" />{{/isAntDesign}}
+);
+
+// Button loading state
+{{#hasTypeScript}}export const ButtonLoading: React.FC<{ loading: boolean; children: React.ReactNode }> = ({{{/hasTypeScript}}{{^hasTypeScript}}export const ButtonLoading = ({{{/hasTypeScript}}
+  loading,
+  children,
+}) => (
+  <>
+    {loading && <InlineLoading size={14} />}
+    {children}
+  </>
+);
+
+// Skeleton loading for content
+{{#isMaterialUI}}
+import { Skeleton } from '@mui/material';
+
+{{#hasTypeScript}}export const ContentSkeleton: React.FC<{
+  lines?: number;
+  height?: number;
+  animation?: 'pulse' | 'wave' | false;
+}> = ({{{/hasTypeScript}}{{^hasTypeScript}}export const ContentSkeleton = ({{{/hasTypeScript}}
+  lines = 3,
+  height = 40,
+  animation = 'wave',
+}) => (
+  <Box>
+    {Array.from({ length: lines }).map((_, index) => (
+      <Skeleton
+        key={index}
+        variant="text"
+        height={height}
+        animation={animation}
+        style={{ marginBottom: 8 }}
+        width={index === lines - 1 ? '70%' : '100%'}
+      />
+    ))}
+  </Box>
+);{{/isMaterialUI}}
+
+{{#isAntDesign}}
+import { Skeleton } from 'antd';
+
+{{#hasTypeScript}}export const ContentSkeleton: React.FC<{
+  lines?: number;
+  active?: boolean;
+}> = ({{{/hasTypeScript}}{{^hasTypeScript}}export const ContentSkeleton = ({{{/hasTypeScript}}
+  lines = 3,
+  active = true,
+}) => (
+  <Skeleton
+    active={active}
+    paragraph={{ rows: lines }}
+    title={false}
+  />
+);{{/isAntDesign}}

@@ -1,0 +1,411 @@
+import axios{{#hasTypeScript}}, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError }{{/hasTypeScript}} from 'axios';
+import { storageService } from './storageService';
+
+{{#hasTypeScript}}
+// Types
+interface ApiError {
+  message: string;
+  code?: string;
+  details?: any;
+}
+
+interface RetryConfig {
+  retries: number;
+  retryDelay: number;
+  retryCondition?: (error: AxiosError) => boolean;
+}
+{{/hasTypeScript}}
+
+/**
+ * Enterprise API Client
+ *
+ * Centralized HTTP client with:
+ * - Authentication token management
+ * - Request/response interceptors
+ * - Automatic retry logic
+ * - Error handling
+ * - Request timeout
+ * - Rate limiting support
+ * - Request/response logging
+ */
+class ApiClient {
+  private client{{#hasTypeScript}}: AxiosInstance{{/hasTypeScript}};
+  private isRefreshing = false;
+  private failedQueue{{#hasTypeScript}}: Array<{
+    resolve: (value?: any) => void;
+    reject: (reason?: any) => void;
+  }>{{/hasTypeScript}} = [];
+
+  constructor() {
+    // Create axios instance with default config
+    this.client = axios.create({
+      baseURL: process.env.REACT_APP_API_BASE_URL || '{{apiBaseUrl}}',
+      timeout: 30000, // 30 seconds
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    this.setupInterceptors();
+  }
+
+  /**
+   * Setup request and response interceptors
+   */
+  private setupInterceptors(){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    // Request interceptor
+    this.client.interceptors.request.use(
+      (config) => {
+        return this.handleRequest(config);
+      },
+      (error) => {
+        return this.handleRequestError(error);
+      }
+    );
+
+    // Response interceptor
+    this.client.interceptors.response.use(
+      (response) => {
+        return this.handleResponse(response);
+      },
+      (error) => {
+        return this.handleResponseError(error);
+      }
+    );
+  }
+
+  /**
+   * Handle outgoing requests
+   */
+  private handleRequest(config{{#hasTypeScript}}: AxiosRequestConfig{{/hasTypeScript}}){{#hasTypeScript}}: AxiosRequestConfig{{/hasTypeScript}} {
+    // Add authentication token
+    const token = storageService.getToken();
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Add request timestamp for monitoring
+    config.metadata = { startTime: new Date() };
+
+    // Add correlation ID for tracing
+    if (!config.headers['X-Correlation-ID']) {
+      config.headers['X-Correlation-ID'] = this.generateCorrelationId();
+    }
+
+    // Log request in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🚀 API Request:', {
+        method: config.method?.toUpperCase(),
+        url: config.url,
+        headers: config.headers,
+        data: config.data,
+      });
+    }
+
+    return config;
+  }
+
+  /**
+   * Handle request errors
+   */
+  private handleRequestError(error{{#hasTypeScript}}: AxiosError{{/hasTypeScript}}) {
+    console.error('❌ Request Error:', error);
+    return Promise.reject(this.createApiError(error));
+  }
+
+  /**
+   * Handle successful responses
+   */
+  private handleResponse(response{{#hasTypeScript}}: AxiosResponse{{/hasTypeScript}}){{#hasTypeScript}}: AxiosResponse{{/hasTypeScript}} {
+    // Calculate response time
+    const requestTime = response.config.metadata?.startTime;
+    const responseTime = requestTime ? new Date().getTime() - requestTime.getTime() : 0;
+
+    // Log response in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ API Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        url: response.config.url,
+        responseTime: `${responseTime}ms`,
+        data: response.data,
+      });
+    }
+
+    // Add response metadata
+    response.metadata = {
+      responseTime,
+      correlationId: response.config.headers['X-Correlation-ID'],
+    };
+
+    return response;
+  }
+
+  /**
+   * Handle response errors with retry and token refresh logic
+   */
+  private async handleResponseError(error{{#hasTypeScript}}: AxiosError{{/hasTypeScript}}) {
+    const originalRequest = error.config;
+
+    // Log error in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('❌ API Error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        url: error.config?.url,
+        message: error.message,
+        data: error.response?.data,
+      });
+    }
+
+    // Handle 401 Unauthorized - Token expired
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      if (this.isRefreshing) {
+        // If token refresh is already in progress, queue this request
+        return new Promise((resolve, reject) => {
+          this.failedQueue.push({ resolve, reject });
+        }).then(token => {
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+          }
+          return this.client(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
+        });
+      }
+
+      originalRequest._retry = true;
+      this.isRefreshing = true;
+
+      try {
+        const refreshToken = storageService.getRefreshToken();
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        // Attempt to refresh token
+        const response = await axios.post(`${this.client.defaults.baseURL}/auth/refresh`, {
+          refreshToken,
+        });
+
+        const { token: newToken, refreshToken: newRefreshToken } = response.data;
+
+        // Update stored tokens
+        storageService.setToken(newToken);
+        storageService.setRefreshToken(newRefreshToken);
+
+        // Process queued requests
+        this.processQueue(null, newToken);
+
+        // Retry original request with new token
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        }
+
+        return this.client(originalRequest);
+      } catch (refreshError) {
+        // Refresh failed, clear tokens and redirect to login
+        this.processQueue(refreshError, null);
+        storageService.clearAuth();
+
+        // Emit event for auth context to handle
+        window.dispatchEvent(new CustomEvent('auth:token-expired'));
+
+        return Promise.reject(this.createApiError(error));
+      } finally {
+        this.isRefreshing = false;
+      }
+    }
+
+    // Handle rate limiting (429)
+    if (error.response?.status === 429) {
+      const retryAfter = error.response.headers['retry-after'];
+      const delay = retryAfter ? parseInt(retryAfter) * 1000 : 1000;
+
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(this.client(originalRequest));
+        }, delay);
+      });
+    }
+
+    // Handle network errors with retry
+    if (this.shouldRetry(error) && originalRequest && !originalRequest._retryCount) {
+      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+      const delay = Math.pow(2, originalRequest._retryCount) * 1000; // Exponential backoff
+
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(this.client(originalRequest));
+        }, delay);
+      });
+    }
+
+    return Promise.reject(this.createApiError(error));
+  }
+
+  /**
+   * Process queued requests after token refresh
+   */
+  private processQueue(error{{#hasTypeScript}}: any{{/hasTypeScript}}, token{{#hasTypeScript}}: string | null{{/hasTypeScript}}){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    this.failedQueue.forEach(({ resolve, reject }) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(token);
+      }
+    });
+
+    this.failedQueue = [];
+  }
+
+  /**
+   * Determine if request should be retried
+   */
+  private shouldRetry(error{{#hasTypeScript}}: AxiosError{{/hasTypeScript}}){{#hasTypeScript}}: boolean{{/hasTypeScript}} {
+    // Retry on network errors or 5xx server errors
+    return (
+      !error.response ||
+      (error.response.status >= 500 && error.response.status <= 599)
+    );
+  }
+
+  /**
+   * Create standardized API error
+   */
+  private createApiError(error{{#hasTypeScript}}: AxiosError{{/hasTypeScript}}){{#hasTypeScript}}: ApiError{{/hasTypeScript}} {
+    if (error.response) {
+      // Server responded with error status
+      const data = error.response.data {{#hasTypeScript}}as any{{/hasTypeScript}};
+      return {
+        message: data?.message || error.message || 'Request failed',
+        code: data?.code || error.response.status.toString(),
+        details: {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: data,
+          url: error.config?.url,
+          method: error.config?.method,
+        },
+      };
+    } else if (error.request) {
+      // Network error
+      return {
+        message: 'Network error. Please check your connection.',
+        code: 'NETWORK_ERROR',
+        details: {
+          url: error.config?.url,
+          method: error.config?.method,
+        },
+      };
+    } else {
+      // Other error
+      return {
+        message: error.message || 'An unexpected error occurred',
+        code: 'UNKNOWN_ERROR',
+        details: {
+          url: error.config?.url,
+          method: error.config?.method,
+        },
+      };
+    }
+  }
+
+  /**
+   * Generate unique correlation ID for request tracing
+   */
+  private generateCorrelationId(){{#hasTypeScript}}: string{{/hasTypeScript}} {
+    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  /**
+   * Public API methods
+   */
+  get(url{{#hasTypeScript}}: string{{/hasTypeScript}}, config{{#hasTypeScript}}?: AxiosRequestConfig{{/hasTypeScript}}) {
+    return this.client.get(url, config);
+  }
+
+  post(url{{#hasTypeScript}}: string{{/hasTypeScript}}, data{{#hasTypeScript}}?: any{{/hasTypeScript}}, config{{#hasTypeScript}}?: AxiosRequestConfig{{/hasTypeScript}}) {
+    return this.client.post(url, data, config);
+  }
+
+  put(url{{#hasTypeScript}}: string{{/hasTypeScript}}, data{{#hasTypeScript}}?: any{{/hasTypeScript}}, config{{#hasTypeScript}}?: AxiosRequestConfig{{/hasTypeScript}}) {
+    return this.client.put(url, data, config);
+  }
+
+  patch(url{{#hasTypeScript}}: string{{/hasTypeScript}}, data{{#hasTypeScript}}?: any{{/hasTypeScript}}, config{{#hasTypeScript}}?: AxiosRequestConfig{{/hasTypeScript}}) {
+    return this.client.patch(url, data, config);
+  }
+
+  delete(url{{#hasTypeScript}}: string{{/hasTypeScript}}, config{{#hasTypeScript}}?: AxiosRequestConfig{{/hasTypeScript}}) {
+    return this.client.delete(url, config);
+  }
+
+  /**
+   * Upload file with progress tracking
+   */
+  upload(
+    url{{#hasTypeScript}}: string{{/hasTypeScript}},
+    file{{#hasTypeScript}}: File{{/hasTypeScript}},
+    onUploadProgress{{#hasTypeScript}}?: (progressEvent: any) => void{{/hasTypeScript}}
+  ) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.client.post(url, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress,
+    });
+  }
+
+  /**
+   * Download file
+   */
+  download(url{{#hasTypeScript}}: string{{/hasTypeScript}}, filename{{#hasTypeScript}}?: string{{/hasTypeScript}}) {
+    return this.client.get(url, {
+      responseType: 'blob',
+    }).then(response => {
+      // Create download link
+      const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename || 'download';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+      return response;
+    });
+  }
+
+  /**
+   * Set base URL
+   */
+  setBaseURL(baseURL{{#hasTypeScript}}: string{{/hasTypeScript}}){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    this.client.defaults.baseURL = baseURL;
+  }
+
+  /**
+   * Set default timeout
+   */
+  setTimeout(timeout{{#hasTypeScript}}: number{{/hasTypeScript}}){{#hasTypeScript}}: void{{/hasTypeScript}} {
+    this.client.defaults.timeout = timeout;
+  }
+
+  /**
+   * Get current configuration
+   */
+  getConfig() {
+    return {
+      baseURL: this.client.defaults.baseURL,
+      timeout: this.client.defaults.timeout,
+      headers: this.client.defaults.headers,
+    };
+  }
+}
+
+// Export singleton instance
+export const apiClient = new ApiClient();

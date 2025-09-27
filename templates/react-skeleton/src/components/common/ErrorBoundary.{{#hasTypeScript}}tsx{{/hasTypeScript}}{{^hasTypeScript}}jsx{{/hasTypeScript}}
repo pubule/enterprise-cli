@@ -1,0 +1,643 @@
+{{#hasTypeScript}}import React, { Component, ReactNode, ErrorInfo } from 'react';{{/hasTypeScript}}{{^hasTypeScript}}import React, { Component } from 'react';{{/hasTypeScript}}
+{{#isMaterialUI}}
+import {
+  Box,
+  Button,
+  Typography,
+  Alert,
+  AlertTitle,
+  Card,
+  CardContent,
+  CardActions,
+  Collapse,
+  IconButton,
+  Divider,
+  Stack,
+  Paper,
+} from '@mui/material';
+import {
+  Error as ErrorIcon,
+  Refresh as RefreshIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  BugReport as BugReportIcon,
+  Home as HomeIcon,
+  ContentCopy as CopyIcon,
+} from '@mui/icons-material';{{/isMaterialUI}}
+{{#isAntDesign}}
+import {
+  Result,
+  Button,
+  Card,
+  Typography,
+  Space,
+  Collapse,
+  Alert,
+  Divider,
+  message,
+} from 'antd';
+import {
+  ExclamationCircleOutlined,
+  ReloadOutlined,
+  DownOutlined,
+  UpOutlined,
+  BugOutlined,
+  HomeOutlined,
+  CopyOutlined,
+} from '@ant-design/icons';
+
+const { Title, Text, Paragraph } = Typography;
+const { Panel } = Collapse;{{/isAntDesign}}
+
+{{#hasTypeScript}}
+// Error boundary state interface
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
+  errorId: string | null;
+  showDetails: boolean;
+  retryCount: number;
+}
+
+// Error boundary props interface
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  enableRetry?: boolean;
+  maxRetries?: number;
+  showErrorDetails?: boolean;
+  showReportButton?: boolean;
+  enableErrorReporting?: boolean;
+  level?: 'page' | 'section' | 'component';
+  isolateError?: boolean;
+  resetOnPropsChange?: boolean;
+  resetKeys?: string[];
+  className?: string;
+}
+
+// Error report interface
+interface ErrorReport {
+  error: string;
+  stack?: string;
+  componentStack?: string;
+  timestamp: number;
+  url: string;
+  userAgent: string;
+  userId?: string;
+  sessionId?: string;
+  errorId: string;
+  retryCount: number;
+  level: string;
+}
+{{/hasTypeScript}}
+
+/**
+ * Comprehensive Error Boundary Component
+ * Catches JavaScript errors anywhere in the component tree and displays fallback UI
+ */
+{{#hasTypeScript}}export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {{{/hasTypeScript}}{{^hasTypeScript}}export class ErrorBoundary extends Component {{{/hasTypeScript}}
+  private resetTimeoutId{{#hasTypeScript}}: NodeJS.Timeout | null{{/hasTypeScript}} = null;
+
+  constructor(props{{#hasTypeScript}}: ErrorBoundaryProps{{/hasTypeScript}}) {
+    super(props);
+
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      errorId: null,
+      showDetails: false,
+      retryCount: 0,
+    };
+  }
+
+  static getDerivedStateFromError(error{{#hasTypeScript}}: Error{{/hasTypeScript}}){{#hasTypeScript}}: Partial<ErrorBoundaryState>{{/hasTypeScript}} {
+    // Update state to trigger fallback UI
+    return {
+      hasError: true,
+      error,
+      errorId: `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    };
+  }
+
+  componentDidCatch(error{{#hasTypeScript}}: Error{{/hasTypeScript}}, errorInfo{{#hasTypeScript}}: ErrorInfo{{/hasTypeScript}}) {
+    // Log error details
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
+
+    this.setState({
+      errorInfo,
+    });
+
+    // Call custom error handler
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
+
+    // Report error if enabled
+    if (this.props.enableErrorReporting) {
+      this.reportError(error, errorInfo);
+    }
+  }
+
+  componentDidUpdate(prevProps{{#hasTypeScript}}: ErrorBoundaryProps{{/hasTypeScript}}) {
+    const { resetOnPropsChange, resetKeys } = this.props;
+    const { hasError } = this.state;
+
+    // Reset error boundary when specified props change
+    if (hasError && resetOnPropsChange && resetKeys) {
+      const hasResetKeyChanged = resetKeys.some(
+        key => prevProps[key] !== this.props[key]
+      );
+
+      if (hasResetKeyChanged) {
+        this.resetErrorBoundary();
+      }
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.resetTimeoutId) {
+      clearTimeout(this.resetTimeoutId);
+    }
+  }
+
+  /**
+   * Report error to monitoring service
+   */
+  reportError = async (error{{#hasTypeScript}}: Error{{/hasTypeScript}}, errorInfo{{#hasTypeScript}}: ErrorInfo{{/hasTypeScript}}) => {
+    try {
+      const report{{#hasTypeScript}}: ErrorReport{{/hasTypeScript}} = {
+        error: error.message,
+        stack: error.stack,
+        componentStack: errorInfo.componentStack,
+        timestamp: Date.now(),
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        errorId: this.state.errorId || 'unknown',
+        retryCount: this.state.retryCount,
+        level: this.props.level || 'component',
+      };
+
+      // Add user context if available
+      const userContext = this.getUserContext();
+      if (userContext) {
+        report.userId = userContext.userId;
+        report.sessionId = userContext.sessionId;
+      }
+
+      // Send to error reporting service (replace with your actual service)
+      await this.sendErrorReport(report);
+    } catch (reportingError) {
+      console.error('Failed to report error:', reportingError);
+    }
+  };
+
+  /**
+   * Get user context for error reporting
+   */
+  getUserContext = () => {
+    try {
+      // Get user context from your auth system
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const sessionId = localStorage.getItem('sessionId') || 'anonymous';
+
+      return {
+        userId: user.id || 'anonymous',
+        sessionId,
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  /**
+   * Send error report to backend service
+   */
+  sendErrorReport = async (report{{#hasTypeScript}}: ErrorReport{{/hasTypeScript}}) => {
+    // Replace with your actual error reporting endpoint
+    const response = await fetch('/api/errors', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(report),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error reporting failed: ${response.statusText}`);
+    }
+  };
+
+  /**
+   * Reset error boundary state
+   */
+  resetErrorBoundary = () => {
+    this.setState({
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      errorId: null,
+      showDetails: false,
+      retryCount: 0,
+    });
+  };
+
+  /**
+   * Retry with exponential backoff
+   */
+  handleRetry = () => {
+    const { maxRetries = 3 } = this.props;
+    const { retryCount } = this.state;
+
+    if (retryCount >= maxRetries) {
+      {{#isMaterialUI}}// Show message using MUI snackbar equivalent
+      console.warn('Maximum retry attempts reached');{{/isMaterialUI}}
+      {{#isAntDesign}}message.warning('Maximum retry attempts reached');{{/isAntDesign}}
+      return;
+    }
+
+    this.setState(prevState => ({
+      retryCount: prevState.retryCount + 1,
+    }));
+
+    // Exponential backoff: 1s, 2s, 4s, etc.
+    const delay = Math.pow(2, retryCount) * 1000;
+
+    this.resetTimeoutId = setTimeout(() => {
+      this.resetErrorBoundary();
+    }, delay);
+
+    {{#isMaterialUI}}console.log(`Retrying in ${delay / 1000} seconds...`);{{/isMaterialUI}}
+    {{#isAntDesign}}message.info(`Retrying in ${delay / 1000} seconds...`);{{/isAntDesign}}
+  };
+
+  /**
+   * Copy error details to clipboard
+   */
+  copyErrorToClipboard = async () => {
+    const { error, errorInfo, errorId } = this.state;
+    const errorDetails = {
+      errorId,
+      message: error?.message,
+      stack: error?.stack,
+      componentStack: errorInfo?.componentStack,
+      timestamp: new Date().toISOString(),
+      url: window.location.href,
+    };
+
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(errorDetails, null, 2));
+      {{#isMaterialUI}}console.log('Error details copied to clipboard');{{/isMaterialUI}}
+      {{#isAntDesign}}message.success('Error details copied to clipboard');{{/isAntDesign}}
+    } catch {
+      {{#isMaterialUI}}console.error('Failed to copy to clipboard');{{/isMaterialUI}}
+      {{#isAntDesign}}message.error('Failed to copy to clipboard');{{/isAntDesign}}
+    }
+  };
+
+  /**
+   * Navigate to home page
+   */
+  goToHome = () => {
+    window.location.href = '/';
+  };
+
+  /**
+   * Toggle error details visibility
+   */
+  toggleDetails = () => {
+    this.setState(prevState => ({
+      showDetails: !prevState.showDetails,
+    }));
+  };
+
+  render() {
+    const {
+      children,
+      fallback,
+      enableRetry = true,
+      maxRetries = 3,
+      showErrorDetails = true,
+      showReportButton = true,
+      level = 'component',
+      className,
+    } = this.props;
+
+    const {
+      hasError,
+      error,
+      errorInfo,
+      errorId,
+      showDetails,
+      retryCount,
+    } = this.state;
+
+    if (hasError) {
+      // Use custom fallback if provided
+      if (fallback) {
+        return <>{fallback}</>;
+      }
+
+      const canRetry = enableRetry && retryCount < maxRetries;
+
+      {{#isMaterialUI}}
+      return (
+        <Box className={className} sx={{ p: 3 }}>
+          <Paper sx={{ p: 3 }}>
+            <Alert severity="error" sx={{ mb: 3 }}>
+              <AlertTitle>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <ErrorIcon />
+                  Something went wrong
+                </Box>
+              </AlertTitle>
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                {level === 'page'
+                  ? 'An error occurred while loading this page.'
+                  : level === 'section'
+                  ? 'An error occurred in this section.'
+                  : 'A component error has occurred.'
+                }
+              </Typography>
+              {errorId && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                  Error ID: {errorId}
+                </Typography>
+              )}
+            </Alert>
+
+            <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+              {canRetry && (
+                <Button
+                  variant="contained"
+                  startIcon={<RefreshIcon />}
+                  onClick={this.handleRetry}
+                  color="primary"
+                >
+                  Retry {retryCount > 0 && `(${retryCount}/${maxRetries})`}
+                </Button>
+              )}
+
+              <Button
+                variant="outlined"
+                startIcon={<HomeIcon />}
+                onClick={this.goToHome}
+              >
+                Go Home
+              </Button>
+
+              {showReportButton && (
+                <Button
+                  variant="outlined"
+                  startIcon={<BugReportIcon />}
+                  onClick={() => this.reportError(error!, errorInfo!)}
+                >
+                  Report Issue
+                </Button>
+              )}
+            </Stack>
+
+            {showErrorDetails && error && (
+              <Card variant="outlined">
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Typography variant="h6" color="text.secondary">
+                      Error Details
+                    </Typography>
+                    <Box>
+                      <IconButton onClick={this.copyErrorToClipboard} size="small">
+                        <CopyIcon />
+                      </IconButton>
+                      <IconButton onClick={this.toggleDetails} size="small">
+                        {showDetails ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                      </IconButton>
+                    </Box>
+                  </Box>
+
+                  <Collapse in={showDetails}>
+                    <Divider sx={{ my: 2 }} />
+                    <Typography variant="subtitle2" gutterBottom>
+                      Error Message:
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      component="pre"
+                      sx={{
+                        backgroundColor: '#f5f5f5',
+                        p: 2,
+                        borderRadius: 1,
+                        overflow: 'auto',
+                        fontSize: '0.875rem',
+                        mb: 2,
+                      }}
+                    >
+                      {error.message}
+                    </Typography>
+
+                    {error.stack && (
+                      <>
+                        <Typography variant="subtitle2" gutterBottom>
+                          Stack Trace:
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          component="pre"
+                          sx={{
+                            backgroundColor: '#f5f5f5',
+                            p: 2,
+                            borderRadius: 1,
+                            overflow: 'auto',
+                            fontSize: '0.75rem',
+                            mb: 2,
+                          }}
+                        >
+                          {error.stack}
+                        </Typography>
+                      </>
+                    )}
+
+                    {errorInfo?.componentStack && (
+                      <>
+                        <Typography variant="subtitle2" gutterBottom>
+                          Component Stack:
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          component="pre"
+                          sx={{
+                            backgroundColor: '#f5f5f5',
+                            p: 2,
+                            borderRadius: 1,
+                            overflow: 'auto',
+                            fontSize: '0.75rem',
+                          }}
+                        >
+                          {errorInfo.componentStack}
+                        </Typography>
+                      </>
+                    )}
+                  </Collapse>
+                </CardContent>
+              </Card>
+            )}
+          </Paper>
+        </Box>
+      );{{/isMaterialUI}}
+
+      {{#isAntDesign}}
+      return (
+        <div className={className} style={{ padding: 24 }}>
+          <Result
+            status="error"
+            title="Something went wrong"
+            subTitle={
+              level === 'page'
+                ? 'An error occurred while loading this page.'
+                : level === 'section'
+                ? 'An error occurred in this section.'
+                : 'A component error has occurred.'
+            }
+            extra={[
+              canRetry && (
+                <Button
+                  key="retry"
+                  type="primary"
+                  icon={<ReloadOutlined />}
+                  onClick={this.handleRetry}
+                >
+                  Retry {retryCount > 0 && `(${retryCount}/${maxRetries})`}
+                </Button>
+              ),
+              <Button
+                key="home"
+                icon={<HomeOutlined />}
+                onClick={this.goToHome}
+              >
+                Go Home
+              </Button>,
+              showReportButton && (
+                <Button
+                  key="report"
+                  icon={<BugOutlined />}
+                  onClick={() => this.reportError(error!, errorInfo!)}
+                >
+                  Report Issue
+                </Button>
+              ),
+            ].filter(Boolean)}
+          />
+
+          {errorId && (
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <Text type="secondary">Error ID: {errorId}</Text>
+            </div>
+          )}
+
+          {showErrorDetails && error && (
+            <Card
+              style={{ marginTop: 24 }}
+              title={
+                <Space>
+                  <Text>Error Details</Text>
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<CopyOutlined />}
+                    onClick={this.copyErrorToClipboard}
+                  />
+                </Space>
+              }
+            >
+              <Collapse ghost>
+                <Panel
+                  header="View Details"
+                  key="details"
+                  extra={showDetails ? <UpOutlined /> : <DownOutlined />}
+                >
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <div>
+                      <Title level={5}>Error Message:</Title>
+                      <Paragraph
+                        code
+                        copyable
+                        style={{
+                          backgroundColor: '#f5f5f5',
+                          padding: 16,
+                          borderRadius: 6,
+                        }}
+                      >
+                        {error.message}
+                      </Paragraph>
+                    </div>
+
+                    {error.stack && (
+                      <div>
+                        <Title level={5}>Stack Trace:</Title>
+                        <Paragraph
+                          code
+                          copyable
+                          style={{
+                            backgroundColor: '#f5f5f5',
+                            padding: 16,
+                            borderRadius: 6,
+                            fontSize: 12,
+                            maxHeight: 300,
+                            overflow: 'auto',
+                          }}
+                        >
+                          {error.stack}
+                        </Paragraph>
+                      </div>
+                    )}
+
+                    {errorInfo?.componentStack && (
+                      <div>
+                        <Title level={5}>Component Stack:</Title>
+                        <Paragraph
+                          code
+                          copyable
+                          style={{
+                            backgroundColor: '#f5f5f5',
+                            padding: 16,
+                            borderRadius: 6,
+                            fontSize: 12,
+                            maxHeight: 300,
+                            overflow: 'auto',
+                          }}
+                        >
+                          {errorInfo.componentStack}
+                        </Paragraph>
+                      </div>
+                    )}
+                  </Space>
+                </Panel>
+              </Collapse>
+            </Card>
+          )}
+        </div>
+      );{{/isAntDesign}}
+    }
+
+    return <>{children}</>;
+  }
+}
+
+/**
+ * Higher-order component for adding error boundary
+ */
+{{#hasTypeScript}}export const withErrorBoundary = <P extends object>(
+  Component: React.ComponentType<P>,
+  errorBoundaryProps?: Omit<ErrorBoundaryProps, 'children'>
+) => {
+  const WrappedComponent = (props: P) => ({{/hasTypeScript}}{{^hasTypeScript}}export const withErrorBoundary = (Component, errorBoundaryProps = {}) => {
+  const WrappedComponent = (props) => ({{/hasTypeScript}}
+    <ErrorBoundary {...errorBoundaryProps}>
+      <Component {...props} />
+    </ErrorBoundary>
+  );
+
+  WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
+  return WrappedComponent;
+};

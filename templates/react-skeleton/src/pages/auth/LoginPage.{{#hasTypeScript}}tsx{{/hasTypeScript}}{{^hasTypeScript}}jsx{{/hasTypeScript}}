@@ -1,0 +1,406 @@
+{{#hasTypeScript}}import React, { useState } from 'react';{{/hasTypeScript}}{{^hasTypeScript}}import React, { useState } from 'react';{{/hasTypeScript}}
+{{#isMaterialUI}}
+import {
+  Box,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Typography,
+  Alert,
+  Divider,
+  Link,
+  Container,
+  IconButton,
+  InputAdornment,
+} from '@mui/material';
+import {
+  Visibility,
+  VisibilityOff,
+  Google as GoogleIcon,
+  GitHub as GitHubIcon,
+} from '@mui/icons-material';{{/isMaterialUI}}
+{{#isAntDesign}}
+import {
+  Form,
+  Input,
+  Button,
+  Typography,
+  Alert,
+  Divider,
+  Card,
+  Space,
+  Flex,
+} from 'antd';
+import {
+  EyeInvisibleOutlined,
+  EyeTwoTone,
+  GoogleOutlined,
+  GithubOutlined,
+  UserOutlined,
+  LockOutlined,
+} from '@ant-design/icons';{{/isAntDesign}}
+{{#hasRouter}}import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';{{/hasRouter}}
+import { useAuth } from '../../contexts/AuthContext';
+import { useNotification } from '../../contexts/NotificationContext';
+import { Loading } from '../../components/common/Loading';
+
+{{#hasTypeScript}}
+interface LoginFormData {
+  email: string;
+  password: string;
+}
+
+interface LocationState {
+  from?: {
+    pathname: string;
+  };
+}
+{{/hasTypeScript}}
+
+{{#hasTypeScript}}export const LoginPage: React.FC = () => {{{/hasTypeScript}}{{^hasTypeScript}}export const LoginPage = () => {{{/hasTypeScript}}
+  const [formData, setFormData] = useState{{#hasTypeScript}}<LoginFormData>{{/hasTypeScript}}({
+    email: '',
+    password: '',
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState{{#hasTypeScript}}<Record<string, string>>{{/hasTypeScript}}({});
+
+  const { login } = useAuth();
+  const { error: notificationError } = useNotification();
+  {{#hasRouter}}const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state {{#hasTypeScript}}as LocationState{{/hasTypeScript}})?.from?.pathname || '/dashboard';{{/hasRouter}}
+
+  const validateForm = (){{#hasTypeScript}}: boolean{{/hasTypeScript}} => {
+    const newErrors{{#hasTypeScript}}: Record<string, string>{{/hasTypeScript}} = {};
+
+    // Email validation
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+    }
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleInputChange = (field{{#hasTypeScript}}: keyof LoginFormData{{/hasTypeScript}}, value{{#hasTypeScript}}: string{{/hasTypeScript}}) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    // Clear field error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: '',
+      }));
+    }
+  };
+
+  const handleSubmit = async (e{{#hasTypeScript}}: React.FormEvent{{/hasTypeScript}}) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      await login(formData.email, formData.password);
+      {{#hasRouter}}navigate(from, { replace: true });{{/hasRouter}}
+    } catch (error) {
+      const errorMessage = error.message || 'Login failed. Please try again.';
+      notificationError('Login Failed', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSocialLogin = (provider{{#hasTypeScript}}: string{{/hasTypeScript}}) => {
+    // Implement social login
+    window.location.href = `{{apiBaseUrl}}/auth/${provider}`;
+  };
+
+  const handleForgotPassword = () => {
+    {{#hasRouter}}navigate('/forgot-password');{{/hasRouter}}
+    {{^hasRouter}}alert('Forgot password functionality would redirect here');{{/hasRouter}}
+  };
+
+  return (
+    {{#isMaterialUI}}<Container component="main" maxWidth="sm">
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          py: 4,
+        }}
+      >
+        <Card elevation={3}>
+          <CardContent sx={{ p: 4 }}>
+            {/* Header */}
+            <Box textAlign="center" mb={4}>
+              <Typography variant="h4" component="h1" gutterBottom>
+                Welcome to {{appNamePascalCase}}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Sign in to your account to continue
+              </Typography>
+            </Box>
+
+            {/* Login Form */}
+            <Box component="form" onSubmit={handleSubmit} noValidate>
+              <TextField
+                fullWidth
+                label="Email Address"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                error={Boolean(errors.email)}
+                helperText={errors.email}
+                margin="normal"
+                autoComplete="email"
+                autoFocus
+                disabled={isLoading}
+              />
+
+              <TextField
+                fullWidth
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                onChange={(e) => handleInputChange('password', e.target.value)}
+                error={Boolean(errors.password)}
+                helperText={errors.password}
+                margin="normal"
+                autoComplete="current-password"
+                disabled={isLoading}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                disabled={isLoading}
+                sx={{ mt: 3, mb: 2 }}
+              >
+                {isLoading ? <Loading size="small" /> : 'Sign In'}
+              </Button>
+
+              <Box textAlign="center">
+                <Link
+                  component="button"
+                  variant="body2"
+                  onClick={handleForgotPassword}
+                  disabled={isLoading}
+                >
+                  Forgot your password?
+                </Link>
+              </Box>
+            </Box>
+
+            {/* Social Login */}
+            <Divider sx={{ my: 3 }}>
+              <Typography variant="body2" color="text.secondary">
+                Or continue with
+              </Typography>
+            </Divider>
+
+            <Box display="flex" gap={2}>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<GoogleIcon />}
+                onClick={() => handleSocialLogin('google')}
+                disabled={isLoading}
+              >
+                Google
+              </Button>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<GitHubIcon />}
+                onClick={() => handleSocialLogin('github')}
+                disabled={isLoading}
+              >
+                GitHub
+              </Button>
+            </Box>
+
+            {/* Register Link */}
+            <Box textAlign="center" mt={3}>
+              <Typography variant="body2">
+                Don't have an account?{' '}
+                {{#hasRouter}}<Link component={RouterLink} to="/register">
+                  Sign up
+                </Link>{{/hasRouter}}
+                {{^hasRouter}}<Link href="/register">
+                  Sign up
+                </Link>{{/hasRouter}}
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+    </Container>{{/isMaterialUI}}
+
+    {{#isAntDesign}}<div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      }}
+    >
+      <Card
+        style={{
+          width: '100%',
+          maxWidth: 400,
+          padding: '20px',
+        }}
+      >
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <Typography.Title level={2}>
+            Welcome to {{appNamePascalCase}}
+          </Typography.Title>
+          <Typography.Text type="secondary">
+            Sign in to your account to continue
+          </Typography.Text>
+        </div>
+
+        {/* Login Form */}
+        <Form
+          layout="vertical"
+          onFinish={handleSubmit}
+          autoComplete="off"
+        >
+          <Form.Item
+            label="Email Address"
+            validateStatus={errors.email ? 'error' : ''}
+            help={errors.email}
+          >
+            <Input
+              prefix={<UserOutlined />}
+              placeholder="Enter your email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              disabled={isLoading}
+              size="large"
+            />
+          </Form.Item>
+
+          <Form.Item
+            label="Password"
+            validateStatus={errors.password ? 'error' : ''}
+            help={errors.password}
+          >
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder="Enter your password"
+              value={formData.password}
+              onChange={(e) => handleInputChange('password', e.target.value)}
+              disabled={isLoading}
+              size="large"
+              iconRender={(visible) =>
+                visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+              }
+            />
+          </Form.Item>
+
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              block
+              size="large"
+              loading={isLoading}
+            >
+              Sign In
+            </Button>
+          </Form.Item>
+
+          <div style={{ textAlign: 'center' }}>
+            <Button
+              type="link"
+              onClick={handleForgotPassword}
+              disabled={isLoading}
+            >
+              Forgot your password?
+            </Button>
+          </div>
+        </Form>
+
+        {/* Social Login */}
+        <Divider>
+          <Typography.Text type="secondary">
+            Or continue with
+          </Typography.Text>
+        </Divider>
+
+        <Space.Compact block>
+          <Button
+            icon={<GoogleOutlined />}
+            onClick={() => handleSocialLogin('google')}
+            disabled={isLoading}
+            style={{ width: '50%' }}
+          >
+            Google
+          </Button>
+          <Button
+            icon={<GithubOutlined />}
+            onClick={() => handleSocialLogin('github')}
+            disabled={isLoading}
+            style={{ width: '50%' }}
+          >
+            GitHub
+          </Button>
+        </Space.Compact>
+
+        {/* Register Link */}
+        <div style={{ textAlign: 'center', marginTop: 24 }}>
+          <Typography.Text>
+            Don't have an account?{' '}
+            {{#hasRouter}}<Typography.Link>
+              <RouterLink to="/register">Sign up</RouterLink>
+            </Typography.Link>{{/hasRouter}}
+            {{^hasRouter}}<Typography.Link href="/register">
+              Sign up
+            </Typography.Link>{{/hasRouter}}
+          </Typography.Text>
+        </div>
+      </Card>
+    </div>{{/isAntDesign}}
+  );
+};
