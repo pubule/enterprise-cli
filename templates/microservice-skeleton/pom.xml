@@ -100,8 +100,6 @@
         {{/hasCamel}}
 
         <!-- Database -->
-        {{#databaseDriverClass}}
-        {{#database}}
         {{#postgresql}}
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -123,8 +121,6 @@
             <scope>runtime</scope>
         </dependency>
         {{/h2}}
-        {{/database}}
-        {{/databaseDriverClass}}
 
         {{#hasFlyway}}
         <!-- Database Migration -->
@@ -233,8 +229,18 @@
                 <version>9.21.1</version>
                 <configuration>
                     <url>{{databaseUrl}}</url>
+                    {{#h2}}
+                    <user>sa</user>
+                    <password></password>
+                    {{/h2}}
+                    {{#postgresql}}
                     <user>postgres</user>
                     <password>password</password>
+                    {{/postgresql}}
+                    {{#mysql}}
+                    <user>root</user>
+                    <password>password</password>
+                    {{/mysql}}
                 </configuration>
             </plugin>
             {{/hasFlyway}}

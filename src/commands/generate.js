@@ -367,7 +367,12 @@ function createTemplateVariables(answers) {
     // Database configuration
     databaseDriverClass: getDatabaseDriverClass(answers.database),
     databaseUrl: getDatabaseUrl(answers.database, answers.serviceName),
-    databaseDialect: getDatabaseDialect(answers.database)
+    databaseDialect: getDatabaseDialect(answers.database),
+
+    // Database-specific flags for templates
+    postgresql: answers.database === 'postgresql',
+    mysql: answers.database === 'mysql',
+    h2: answers.database === 'h2'
   };
 }
 

@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "bin": {
     "enterprise": "./bin/enterprise-cli.js",
-    "enterprise-cli": "./bin/enterprise-cli.js"
+    "enterprise-cli": "./bin/enterprise-cli.js",
+    "ent": "./bin/enterprise-cli.js"
   },
   "scripts": {
     "start": "node bin/enterprise-cli.js",
