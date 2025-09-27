@@ -53,13 +53,13 @@ async function collectServiceInformation(serviceName, options) {
       name: 'serviceName',
       message: 'What is the name of your microservice?',
       validate: (input) => {
-        if (!input.trim()) return 'Service name is required';
+        if (!input || typeof input !== 'string' || !input.trim()) return 'Service name is required';
         if (!validation.isValidServiceName(input)) {
           return 'Service name must be kebab-case (e.g., user-service, order-management)';
         }
         return true;
       },
-      filter: (input) => input.trim().toLowerCase()
+      filter: (input) => input && typeof input === 'string' ? input.trim().toLowerCase() : ''
     });
   }
 
@@ -70,13 +70,13 @@ async function collectServiceInformation(serviceName, options) {
       name: 'domain',
       message: 'What is the business domain?',
       validate: (input) => {
-        if (!input.trim()) return 'Domain is required';
+        if (!input || typeof input !== 'string' || !input.trim()) return 'Domain is required';
         if (!validation.isValidJavaIdentifier(input)) {
           return 'Domain must be a valid Java identifier (e.g., user, order, inventory)';
         }
         return true;
       },
-      filter: (input) => input.trim().toLowerCase()
+      filter: (input) => input && typeof input === 'string' ? input.trim().toLowerCase() : ''
     });
   }
 
@@ -104,16 +104,33 @@ async function collectServiceInformation(serviceName, options) {
       message: 'Entity classes to generate (comma-separated)?',
       default: (answers) => validation.capitalizeFirst(answers.domain || options.domain),
       validate: (input) => {
-        if (!input.trim()) return 'At least one entity is required';
-        const entities = input.split(',').map(e => e.trim());
+        // Handle both string and array inputs (filter may have processed it already)
+        let entities;
+        if (Array.isArray(input)) {
+          entities = input;
+        } else if (typeof input === 'string') {
+          if (!input.trim()) return 'At least one entity is required';
+          entities = input.split(',').map(e => e.trim());
+        } else {
+          return 'At least one entity is required';
+        }
+
+        if (entities.length === 0) return 'At least one entity is required';
+
         for (const entity of entities) {
+          if (!entity || typeof entity !== 'string' || !entity.trim()) {
+            return 'Empty entity name is not allowed';
+          }
           if (!validation.isValidJavaClassName(entity)) {
             return `Invalid entity name: ${entity}. Must be PascalCase (e.g., User, OrderItem)`;
           }
         }
         return true;
       },
-      filter: (input) => input.split(',').map(e => validation.capitalizeFirst(e.trim()))
+      filter: (input) => {
+        if (!input || typeof input !== 'string') return [];
+        return input.split(',').map(e => validation.capitalizeFirst(e.trim()));
+      }
     });
   }
 
@@ -168,9 +185,9 @@ async function collectServiceInformation(serviceName, options) {
 
     // Merge with provided options
     const finalEntities = options.entities
-      ? options.entities.split(',').map(e => e.trim())
+      ? (typeof options.entities === 'string' ? options.entities.split(',').map(e => e.trim()) : [])
       : answers.entities
-        ? (Array.isArray(answers.entities) ? answers.entities : answers.entities.split(',').map(e => e.trim()))
+        ? (Array.isArray(answers.entities) ? answers.entities : (typeof answers.entities === 'string' ? answers.entities.split(',').map(e => e.trim()) : []))
         : [];
 
     return {
@@ -187,7 +204,7 @@ async function collectServiceInformation(serviceName, options) {
 
   // Use provided options
   const finalEntities = options.entities
-    ? options.entities.split(',').map(e => e.trim())
+    ? (typeof options.entities === 'string' ? options.entities.split(',').map(e => e.trim()) : [])
     : [validation.capitalizeFirst(options.domain)];
 
   return {

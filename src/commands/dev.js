@@ -201,8 +201,9 @@ async function setupBackendDevelopment(config) {
     }
 
     // Check Maven installation
+    const { getMavenExecutable } = require('../utils/maven-utils');
     try {
-      await execa('mvn', ['--version'], { cwd: backendDir });
+      await execa(getMavenExecutable(), ['--version'], { cwd: backendDir });
       spinner.text = 'Maven installation verified';
     } catch {
       throw new Error('Maven not found. Please install Apache Maven.');
@@ -210,11 +211,11 @@ async function setupBackendDevelopment(config) {
 
     // Install dependencies
     spinner.text = 'Installing backend dependencies...';
-    await execa('mvn', ['dependency:resolve'], { cwd: backendDir });
+    await execa(getMavenExecutable(), ['dependency:resolve'], { cwd: backendDir });
 
     // Run tests to ensure everything is working
     spinner.text = 'Running backend tests...';
-    await execa('mvn', ['test', '-q'], { cwd: backendDir });
+    await execa(getMavenExecutable(), ['test', '-q'], { cwd: backendDir });
 
     spinner.succeed('Backend development environment ready');
 

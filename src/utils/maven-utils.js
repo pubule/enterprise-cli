@@ -1,10 +1,19 @@
 const fs = require('fs-extra');
 const path = require('path');
 const { execa } = require('execa');
+const which = require('which');
 
 /**
  * Maven utilities for Spring Boot project management
  */
+
+/**
+ * Get the correct Maven executable for the current platform
+ * @returns {string} Maven executable name (mvn or mvn.cmd on Windows)
+ */
+function getMavenExecutable() {
+  return process.platform === 'win32' ? 'mvn.cmd' : 'mvn';
+}
 
 /**
  * Check if Maven is installed and accessible
@@ -12,7 +21,7 @@ const { execa } = require('execa');
  */
 async function isMavenAvailable() {
   try {
-    await execa('mvn', ['--version']);
+    await execa(getMavenExecutable(), ['--version']);
     return true;
   } catch {
     return false;
@@ -25,7 +34,7 @@ async function isMavenAvailable() {
  */
 async function getMavenVersion() {
   try {
-    const { stdout } = await execa('mvn', ['--version']);
+    const { stdout } = await execa(getMavenExecutable(), ['--version']);
     const versionMatch = stdout.match(/Apache Maven (\d+\.\d+\.\d+)/);
     return versionMatch ? versionMatch[1] : null;
   } catch {
@@ -63,7 +72,7 @@ async function createMavenProject(options) {
     args.push(`-Dpackage=${packageName}`);
   }
 
-  await execa('mvn', args, { stdio: 'pipe' });
+  await execa(getMavenExecutable(), args, { stdio: 'pipe' });
 }
 
 /**
@@ -327,7 +336,7 @@ async function runMavenCommand(command, options = {}) {
   };
 
   try {
-    const result = await execa('mvn', args, execOptions);
+    const result = await execa(getMavenExecutable(), args, execOptions);
     return {
       success: true,
       stdout: result.stdout,
@@ -517,6 +526,7 @@ function getTestingDependencies() {
 }
 
 module.exports = {
+  getMavenExecutable,
   isMavenAvailable,
   getMavenVersion,
   createMavenProject,

@@ -207,13 +207,13 @@ async function collectAppInformation(appName, options) {
       name: 'appName',
       message: 'What is the name of your React application?',
       validate: (input) => {
-        if (!input.trim()) return 'Application name is required';
+        if (!input || typeof input !== 'string' || !input.trim()) return 'Application name is required';
         if (!validation.isValidAppName(input)) {
           return 'App name must be kebab-case (e.g., user-dashboard, order-management-app)';
         }
         return true;
       },
-      filter: (input) => input.trim().toLowerCase()
+      filter: (input) => input && typeof input === 'string' ? input.trim().toLowerCase() : ''
     });
   }
 
