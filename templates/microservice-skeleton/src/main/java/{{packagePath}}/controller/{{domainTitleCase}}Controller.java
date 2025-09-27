@@ -3,6 +3,7 @@ package {{packageName}}.controller;
 import {{packageName}}.dto.{{domainTitleCase}}Request;
 import {{packageName}}.dto.{{domainTitleCase}}Response;
 import {{packageName}}.service.{{domainTitleCase}}Service;
+import {{packageName}}.validation.{{domainTitleCase}}Validator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -35,10 +36,13 @@ public class {{domainTitleCase}}Controller {
     private static final Logger logger = LoggerFactory.getLogger({{domainTitleCase}}Controller.class);
 
     private final {{domainTitleCase}}Service {{domain}}Service;
+    private final {{domainTitleCase}}Validator {{domain}}Validator;
 
     @Autowired
-    public {{domainTitleCase}}Controller({{domainTitleCase}}Service {{domain}}Service) {
+    public {{domainTitleCase}}Controller({{domainTitleCase}}Service {{domain}}Service,
+                                        {{domainTitleCase}}Validator {{domain}}Validator) {
         this.{{domain}}Service = {{domain}}Service;
+        this.{{domain}}Validator = {{domain}}Validator;
     }
 
     /**
@@ -123,6 +127,13 @@ public class {{domainTitleCase}}Controller {
             @Valid @RequestBody {{domainTitleCase}}Request request) {
 
         try {
+            // Perform custom validation
+            {{domainTitleCase}}Validator.ValidationResult validationResult = {{domain}}Validator.validateCreateRequest(request);
+            if (!validationResult.isValid()) {
+                logger.warn("Validation failed for {{domain}} creation: {}", validationResult.getErrorMessage());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+
             logger.info("Creating new {{domain}} with name: {}", request.getName());
             {{domainTitleCase}}Response {{domain}} = {{domain}}Service.create{{domainTitleCase}}(request);
             logger.info("Successfully created {{domain}} with ID: {}", {{domain}}.getId());
@@ -151,6 +162,13 @@ public class {{domainTitleCase}}Controller {
             @Valid @RequestBody {{domainTitleCase}}Request request) {
 
         try {
+            // Perform custom validation
+            {{domainTitleCase}}Validator.ValidationResult validationResult = {{domain}}Validator.validateUpdateRequest(id, request);
+            if (!validationResult.isValid()) {
+                logger.warn("Validation failed for {{domain}} update: {}", validationResult.getErrorMessage());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+
             logger.info("Updating {{domain}} with ID: {}", id);
             return {{domain}}Service.update{{domainTitleCase}}(id, request)
                     .map({{domain}} -> {
@@ -181,15 +199,27 @@ public class {{domainTitleCase}}Controller {
             @Parameter(description = "{{domainTitleCase}} unique identifier")
             @PathVariable String id) {
 
-        logger.info("Deleting {{domain}} with ID: {}", id);
-        boolean deleted = {{domain}}Service.delete{{domainTitleCase}}(id);
+        try {
+            // Perform custom validation
+            {{domainTitleCase}}Validator.ValidationResult validationResult = {{domain}}Validator.validateDeleteRequest(id);
+            if (!validationResult.isValid()) {
+                logger.warn("Validation failed for {{domain}} deletion: {}", validationResult.getErrorMessage());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
 
-        if (deleted) {
-            logger.info("Successfully deleted {{domain}} with ID: {}", id);
-            return ResponseEntity.noContent().build();
-        } else {
-            logger.warn("{{domainTitleCase}} not found with ID: {}", id);
-            return ResponseEntity.notFound().build();
+            logger.info("Deleting {{domain}} with ID: {}", id);
+            boolean deleted = {{domain}}Service.delete{{domainTitleCase}}(id);
+
+            if (deleted) {
+                logger.info("Successfully deleted {{domain}} with ID: {}", id);
+                return ResponseEntity.noContent().build();
+            } else {
+                logger.warn("{{domainTitleCase}} not found with ID: {}", id);
+                return ResponseEntity.notFound().build();
+            }
+        } catch (IllegalArgumentException e) {
+            logger.warn("Failed to delete {{domain}} with ID {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
     }
 

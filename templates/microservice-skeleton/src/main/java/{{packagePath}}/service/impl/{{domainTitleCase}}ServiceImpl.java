@@ -8,6 +8,7 @@ import {{packageName}}.mapper.{{domainTitleCase}}Mapper;
 import {{packageName}}.monitoring.{{domainTitleCase}}MetricsService;
 import {{packageName}}.repository.{{domainTitleCase}}Repository;
 import {{packageName}}.service.{{domainTitleCase}}Service;
+import {{packageName}}.validation.{{domainTitleCase}}Validator;
 import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,16 +41,19 @@ public class {{domainTitleCase}}ServiceImpl implements {{domainTitleCase}}Servic
     private final {{domainTitleCase}}Mapper {{domain}}Mapper;
     private final DomainEventPublisher eventPublisher;
     private final {{domainTitleCase}}MetricsService metricsService;
+    private final {{domainTitleCase}}Validator {{domain}}Validator;
 
     @Autowired
     public {{domainTitleCase}}ServiceImpl({{domainTitleCase}}Repository {{domain}}Repository,
                                         {{domainTitleCase}}Mapper {{domain}}Mapper,
                                         DomainEventPublisher eventPublisher,
-                                        {{domainTitleCase}}MetricsService metricsService) {
+                                        {{domainTitleCase}}MetricsService metricsService,
+                                        {{domainTitleCase}}Validator {{domain}}Validator) {
         this.{{domain}}Repository = {{domain}}Repository;
         this.{{domain}}Mapper = {{domain}}Mapper;
         this.eventPublisher = eventPublisher;
         this.metricsService = metricsService;
+        this.{{domain}}Validator = {{domain}}Validator;
     }
 
     @Override
@@ -59,8 +63,11 @@ public class {{domainTitleCase}}ServiceImpl implements {{domainTitleCase}}Servic
         logger.info("Creating new {{domain}} with name: {}", request.getName());
 
         try {
-            // Add your custom business validation here
-            validateCreate{{domainTitleCase}}Request(request);
+            // Validate request using custom validator
+            {{domainTitleCase}}Validator.ValidationResult validationResult = {{domain}}Validator.validateCreateRequest(request);
+            if (!validationResult.isValid()) {
+                throw new IllegalArgumentException(validationResult.getErrorMessage());
+            }
 
             // Check if {{domain}} with same name already exists
             if ({{domain}}Repository.existsByNameIgnoreCase(request.getName())) {
@@ -127,8 +134,11 @@ public class {{domainTitleCase}}ServiceImpl implements {{domainTitleCase}}Servic
         try {
             return {{domain}}Repository.findById(id)
                     .map(existingEntity -> {
-                        // Add your custom business validation here
-                        validateUpdate{{domainTitleCase}}Request(id, request);
+                        // Validate request using custom validator
+                        {{domainTitleCase}}Validator.ValidationResult validationResult = {{domain}}Validator.validateUpdateRequest(id, request);
+                        if (!validationResult.isValid()) {
+                            throw new IllegalArgumentException(validationResult.getErrorMessage());
+                        }
 
                         // Store previous state for event
                         {{domainTitleCase}} previousEntity = {{domain}}Mapper.copy(existingEntity);
@@ -171,8 +181,11 @@ public class {{domainTitleCase}}ServiceImpl implements {{domainTitleCase}}Servic
         try {
             return {{domain}}Repository.findById(id)
                     .map(entityToDelete -> {
-                        // Add your custom business validation here
-                        validateDelete{{domainTitleCase}}Request(id, entityToDelete);
+                        // Validate deletion using custom validator
+                        {{domainTitleCase}}Validator.ValidationResult validationResult = {{domain}}Validator.validateDeleteRequest(id);
+                        if (!validationResult.isValid()) {
+                            throw new IllegalArgumentException(validationResult.getErrorMessage());
+                        }
 
                         {{domain}}Repository.deleteById(id);
 
@@ -280,73 +293,17 @@ public class {{domainTitleCase}}ServiceImpl implements {{domainTitleCase}}Servic
     }
 
     // ================================
-    // Custom Business Validation Methods
+    // Additional Business Logic Methods
     // ================================
-    // Add your domain-specific business rules here
+    // Add your domain-specific business methods here
+    // Custom validation is now handled by {{domainTitleCase}}Validator
 
     /**
-     * Validate business rules for {{domainTitleCase}} creation
-     * Override this method to add your custom validation logic
+     * Additional business logic can be added here
+     * All validation is handled by {{domainTitleCase}}Validator
      */
-    protected void validateCreate{{domainTitleCase}}Request({{domainTitleCase}}Request request) {
-        // Add your custom business validation here
-        // Examples:
-        // - Validate business-specific naming conventions
-        // - Check business rules and constraints
-        // - Validate against external systems
-        // - Apply domain-specific logic
-
-        if (request.getName() != null && request.getName().length() < 2) {
-            throw new IllegalArgumentException("{{domainTitleCase}} name must be at least 2 characters long");
-        }
-
-        // Example: Business rule validation
-        // if (request.getName() != null && request.getName().startsWith("SYSTEM_")) {
-        //     throw new IllegalArgumentException("{{domainTitleCase}} name cannot start with 'SYSTEM_' prefix");
-        // }
-    }
-
-    /**
-     * Validate business rules for {{domainTitleCase}} update
-     * Override this method to add your custom validation logic
-     */
-    protected void validateUpdate{{domainTitleCase}}Request(String id, {{domainTitleCase}}Request request) {
-        // Add your custom business validation here
-        // Examples:
-        // - Validate state transitions
-        // - Check if update is allowed based on current state
-        // - Validate business workflow rules
-        // - Apply domain-specific constraints
-
-        validateCreate{{domainTitleCase}}Request(request); // Reuse create validation
-
-        // Example: State-based validation
-        // {{domainTitleCase}} existing = {{domain}}Repository.findById(id).orElse(null);
-        // if (existing != null && existing.getStatus() == Status.LOCKED) {
-        //     throw new IllegalStateException("Cannot update {{domain}} in LOCKED state");
-        // }
-    }
-
-    /**
-     * Validate business rules for {{domainTitleCase}} deletion
-     * Override this method to add your custom validation logic
-     */
-    protected void validateDelete{{domainTitleCase}}Request(String id, {{domainTitleCase}} entity) {
-        // Add your custom business validation here
-        // Examples:
-        // - Check if deletion is allowed
-        // - Validate referential integrity
-        // - Check business workflow rules
-        // - Apply domain-specific constraints
-
-        // Example: Prevent deletion of system entities
-        // if (entity.getName() != null && entity.getName().startsWith("SYSTEM_")) {
-        //     throw new IllegalStateException("Cannot delete system {{domain}}s");
-        // }
-
-        // Example: Check for dependent entities
-        // if (hasDependentEntities(id)) {
-        //     throw new IllegalStateException("Cannot delete {{domain}} with dependent entities");
-        // }
-    }
+    // Example:
+    // private boolean hasSpecialBusinessRules({{domainTitleCase}}Request request) {
+    //     return false; // Implement your specific business logic
+    // }
 }
