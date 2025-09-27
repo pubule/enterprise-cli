@@ -1,0 +1,65 @@
+{
+  "name": "enterprise-cli",
+  "version": "1.0.0",
+  "description": "Comprehensive Enterprise CLI tool for automating full-stack application generation with Spring Boot backend and React frontend",
+  "main": "src/index.js",
+  "bin": {
+    "enterprise": "./bin/enterprise-cli.js",
+    "enterprise-cli": "./bin/enterprise-cli.js"
+  },
+  "scripts": {
+    "start": "node bin/enterprise-cli.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix"
+  },
+  "keywords": [
+    "cli",
+    "enterprise",
+    "spring-boot",
+    "react",
+    "full-stack",
+    "code-generation",
+    "microservices",
+    "templates"
+  ],
+  "author": "Enterprise Development Team",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "execa": "^8.0.1",
+    "figlet": "^1.7.0",
+    "fs-extra": "^11.1.1",
+    "globby": "^14.0.0",
+    "inquirer": "^9.2.12",
+    "mustache": "^4.2.0",
+    "node-fetch": "^3.3.2",
+    "ora": "^7.0.1",
+    "semver": "^7.5.4",
+    "validate-npm-package-name": "^5.0.0",
+    "yaml": "^2.3.4"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.1.1",
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/enterprise/enterprise-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/enterprise/enterprise-cli/issues"
+  },
+  "homepage": "https://github.com/enterprise/enterprise-cli#readme"
+}
