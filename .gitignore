@@ -97,3 +97,5 @@ temp/
 
 # Claude Code settings
 .claude/
+/.specify/*
+/.serena/*

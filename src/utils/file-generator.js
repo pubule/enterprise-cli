@@ -2,10 +2,141 @@ const fs = require('fs-extra');
 const path = require('path');
 const mustache = require('mustache');
 const globby = require('globby');
+const inquirer = require('inquirer');
+const chalk = require('chalk');
+
+// Global state for user choices
+let globalConflictChoice = null;
 
 /**
  * File generation utilities using Mustache templates
  */
+
+/**
+ * Handle file conflicts when a file already exists
+ * @param {string} filePath - Path to the file that would be created
+ * @returns {string} Action to take: 'overwrite', 'skip', 'backup'
+ */
+async function handleFileConflict(filePath) {
+  // If file doesn't exist, no conflict
+  if (!await fs.pathExists(filePath)) {
+    return 'overwrite';
+  }
+
+  // If user already chose a global option, use it
+  if (globalConflictChoice === 'overwrite-all') {
+    return 'overwrite';
+  }
+  if (globalConflictChoice === 'skip-all') {
+    return 'skip';
+  }
+
+  // Ask user what to do for this specific file
+  console.log(chalk.yellow(`\n⚠️  File already exists: ${chalk.cyan(filePath)}`));
+
+  const choice = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'action',
+      message: 'What would you like to do?',
+      choices: [
+        { name: '📝 Overwrite this file', value: 'overwrite' },
+        { name: '⏭️  Skip this file', value: 'skip' },
+        { name: '💾 Create backup and overwrite', value: 'backup' },
+        { name: '📝✅ Overwrite this and all remaining files', value: 'overwrite-all' },
+        { name: '⏭️✅ Skip this and all remaining files', value: 'skip-all' },
+        { name: '❌ Cancel entire operation', value: 'cancel' }
+      ],
+      default: 'backup'
+    }
+  ]);
+
+  switch (choice.action) {
+    case 'overwrite-all':
+      globalConflictChoice = 'overwrite-all';
+      return 'overwrite';
+
+    case 'skip-all':
+      globalConflictChoice = 'skip-all';
+      return 'skip';
+
+    case 'cancel':
+      console.log(chalk.gray('\n👋 Operation cancelled by user.'));
+      process.exit(0);
+      break;
+
+    default:
+      return choice.action;
+  }
+}
+
+/**
+ * Reset global conflict choice (call at start of new generation)
+ */
+function resetConflictChoice() {
+  globalConflictChoice = null;
+}
+
+/**
+ * Safely write file with conflict handling
+ * @param {string} filePath - Path where file should be written
+ * @param {string} content - Content to write
+ * @param {string} encoding - File encoding (default: 'utf8')
+ */
+async function safeWriteFile(filePath, content, encoding = 'utf8') {
+  const action = await handleFileConflict(filePath);
+
+  switch (action) {
+    case 'skip':
+      console.log(chalk.gray(`  ⏭️  Skipped: ${path.relative(process.cwd(), filePath)}`));
+      return;
+
+    case 'backup':
+      if (await fs.pathExists(filePath)) {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        const backupPath = `${filePath}.backup-${timestamp}`;
+        await fs.move(filePath, backupPath);
+        console.log(chalk.gray(`  💾 Backup created: ${path.relative(process.cwd(), backupPath)}`));
+      }
+      // Fall through to overwrite
+
+    case 'overwrite':
+      await fs.ensureDir(path.dirname(filePath));
+      await fs.writeFile(filePath, content, encoding);
+      console.log(chalk.green(`  ✅ Created: ${path.relative(process.cwd(), filePath)}`));
+      break;
+  }
+}
+
+/**
+ * Safely copy file with conflict handling
+ * @param {string} sourcePath - Source file path
+ * @param {string} targetPath - Target file path
+ */
+async function safeCopyFile(sourcePath, targetPath) {
+  const action = await handleFileConflict(targetPath);
+
+  switch (action) {
+    case 'skip':
+      console.log(chalk.gray(`  ⏭️  Skipped: ${path.relative(process.cwd(), targetPath)}`));
+      return;
+
+    case 'backup':
+      if (await fs.pathExists(targetPath)) {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        const backupPath = `${targetPath}.backup-${timestamp}`;
+        await fs.move(targetPath, backupPath);
+        console.log(chalk.gray(`  💾 Backup created: ${path.relative(process.cwd(), backupPath)}`));
+      }
+      // Fall through to overwrite
+
+    case 'overwrite':
+      await fs.ensureDir(path.dirname(targetPath));
+      await fs.copy(sourcePath, targetPath);
+      console.log(chalk.green(`  ✅ Copied: ${path.relative(process.cwd(), targetPath)}`));
+      break;
+  }
+}
 
 /**
  * Generate files from a template directory
@@ -19,6 +150,9 @@ async function generateFromTemplate(templateName, outputPath, variables) {
   if (!await fs.pathExists(templatePath)) {
     throw new Error(`Template not found: ${templateName}`);
   }
+
+  // Reset conflict choice for each new template generation
+  resetConflictChoice();
 
   await processTemplateDirectory(templatePath, outputPath, variables);
 }
@@ -39,11 +173,8 @@ async function generateFile(templateFile, outputFile, variables) {
   const content = await fs.readFile(templatePath, 'utf8');
   const rendered = mustache.render(content, variables);
 
-  // Ensure output directory exists
-  await fs.ensureDir(path.dirname(outputFile));
-
-  // Write the rendered content
-  await fs.writeFile(outputFile, rendered, 'utf8');
+  // Use safe write with conflict handling
+  await safeWriteFile(outputFile, rendered, 'utf8');
 }
 
 /**
@@ -65,11 +196,12 @@ async function processTemplateDirectory(templatePath, outputPath, variables) {
     let outputFilePath = path.join(outputPath, file);
 
     // Process filename templates (e.g., {{serviceName}}.java)
-    outputFilePath = mustache.render(outputFilePath, variables);
+    // Use simple string replacement for file paths to avoid HTML escaping
+    outputFilePath = processFilenamePath(outputFilePath, variables);
 
     // Skip binary files or files that shouldn't be templated
     if (shouldSkipFile(file)) {
-      await fs.copy(templateFilePath, outputFilePath);
+      await safeCopyFile(templateFilePath, outputFilePath);
       continue;
     }
 
@@ -78,14 +210,11 @@ async function processTemplateDirectory(templatePath, outputPath, variables) {
       const content = await fs.readFile(templateFilePath, 'utf8');
       const rendered = mustache.render(content, variables);
 
-      // Ensure output directory exists
-      await fs.ensureDir(path.dirname(outputFilePath));
-
-      // Write the rendered content
-      await fs.writeFile(outputFilePath, rendered, 'utf8');
+      // Use safe write with conflict handling
+      await safeWriteFile(outputFilePath, rendered, 'utf8');
     } catch (error) {
-      // If file can't be read as text, copy it as binary
-      await fs.copy(templateFilePath, outputFilePath);
+      // If file can't be read as text, copy it as binary with conflict handling
+      await safeCopyFile(templateFilePath, outputFilePath);
     }
   }
 }
@@ -110,6 +239,26 @@ function getTemplatePath(templateName) {
 
   // If not found, return the first path for error handling
   return srcTemplatePath;
+}
+
+/**
+ * Process filename/path templates without HTML escaping
+ * @param {string} filePath - File path with template variables
+ * @param {object} variables - Variables to substitute
+ * @returns {string} Processed file path
+ */
+function processFilenamePath(filePath, variables) {
+  let result = filePath;
+
+  // Simple string replacement for common template variables in file paths
+  for (const [key, value] of Object.entries(variables)) {
+    if (typeof value === 'string') {
+      const placeholder = `{{${key}}}`;
+      result = result.replace(new RegExp(escapeRegExp(placeholder), 'g'), value);
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -422,5 +571,8 @@ module.exports = {
   listAvailableTemplates,
   validateTemplateVariables,
   createTemplateFromSource,
-  processTemplateDirectory
+  processTemplateDirectory,
+  resetConflictChoice,
+  safeWriteFile,
+  safeCopyFile
 };
