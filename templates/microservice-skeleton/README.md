@@ -1,11 +1,13 @@
-# {{serviceNameTitleCase}} 🚀
+# {{serviceNameTitleCase}} - Enterprise Framework Microservice 🚀
 
 [![CI/CD Pipeline](https://github.com/company/{{serviceName}}/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/company/{{serviceName}}/actions/workflows/ci-cd.yml)
 [![Coverage](https://codecov.io/gh/company/{{serviceName}}/branch/main/graph/badge.svg)](https://codecov.io/gh/company/{{serviceName}})
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project={{serviceName}}&metric=alert_status)](https://sonarcloud.io/dashboard?id={{serviceName}})
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project={{serviceName}}&metric=security_rating)](https://sonarcloud.io/dashboard?id={{serviceName}})
 
-Enterprise-grade {{domainTitleCase}} microservice built with Spring Boot, designed for scalability, maintainability, and performance.
+🎯 **Enterprise Framework microservice where developers implement ONLY business logic - all infrastructure is automatic and cannot be modified.**
+
+This {{domainTitleCase}} microservice is built using the **Enterprise Framework** approach that "blinds" all infrastructure code and forces developers to focus exclusively on business value. Transactions, caching, metrics, audit, events, security - all handled automatically.
 
 ## 📋 Table of Contents
 
@@ -22,31 +24,49 @@ Enterprise-grade {{domainTitleCase}} microservice built with Spring Boot, design
 - [Contributing](#contributing)
 - [License](#license)
 
-## 🔍 Overview
+## 🔍 **Enterprise Framework Overview**
 
-The {{serviceNameTitleCase}} is a production-ready microservice that provides comprehensive {{domainTitleCase}} management capabilities. Built using modern enterprise patterns and best practices, it offers:
+The {{serviceNameTitleCase}} demonstrates the **Enterprise Framework** approach where:
 
-- **RESTful API** for {{domainTitleCase}} operations
-- **Robust data persistence** with JPA and database support
-- **Enterprise security** with OAuth2/JWT authentication
-- **Comprehensive monitoring** and observability
-- **Cloud-native deployment** with Docker and Kubernetes
-- **Automated CI/CD** with quality gates and security scanning
+- 🤖 **Infrastructure is "Blinded"** - Cannot be modified by developers (final methods)
+- 👨‍💻 **Business Logic Only** - Developers implement only domain-specific logic
+- 🏗️ **Template Method Pattern** - Framework orchestrates, developers provide business steps
+- 📚 **Strategy Pattern** - Business validation and rules are interchangeable implementations
 
-## ✨ Features
+### What Developers Implement (Business Logic Only)
+- **{{domainTitleCase}}BusinessValidator** - Domain-specific validation rules
+- **{{domainTitleCase}}BusinessRules** - Business logic and policies
+- **{{domainTitleCase}}ServiceImpl** - Business interface implementation
+- **{{domainTitleCase}}Controller** - Business-specific endpoints
 
-### Core Functionality
-- 🔧 **Full CRUD Operations** - Create, read, update, and delete {{domain}}s
-- 🔍 **Advanced Search** - Flexible search and filtering capabilities
-- 📄 **Pagination Support** - Efficient handling of large datasets
-- 🔄 **Data Validation** - Comprehensive input validation and sanitization
+### What Framework Provides (Automatic Infrastructure)
+- **Transactions** - Automatic transaction boundaries for all operations
+- **Caching** - Entity-level caching with automatic invalidation
+- **Metrics** - Business and technical metrics collection
+- **Audit** - Comprehensive JSON audit events for compliance
+- **Events** - Domain event publishing with correlation IDs
+- **Security** - Input validation, error handling, security headers
+- **Performance** - Automatic optimization and monitoring
 
-### Enterprise Features
-- 🛡️ **Security First** - OAuth2, JWT, CORS, and security headers
-- 📊 **Monitoring Ready** - Health checks, metrics, and distributed tracing
-- 🚀 **Performance Optimized** - Caching, connection pooling, and query optimization
-- 🔌 **Integration Ready** - Apache Camel routes for enterprise integration
-- 📚 **API Documentation** - Interactive OpenAPI/Swagger documentation
+## ✨ **Enterprise Framework Features**
+
+### 🤖 **Automatic Infrastructure (No Developer Code Required)**
+- 🔧 **Complete CRUD Operations** - AbstractEnterpriseService handles all operations
+- 🔍 **Enterprise Search** - Global text search with JPA Specifications
+- 📄 **Pagination & Filtering** - Optimized for large datasets
+- 🔄 **Business Validation** - Orchestrated through BusinessValidator interface
+- 🛡️ **Enterprise Security** - OAuth2, JWT, CORS, security headers automatic
+- 📊 **Comprehensive Monitoring** - Health checks, metrics, distributed tracing
+- 🚀 **Performance Optimization** - Caching, connection pooling, query optimization
+- 🔌 **Domain Events** - Automatic event publishing for microservice communication
+- 📚 **OpenAPI Documentation** - Auto-generated with business context
+
+### 👨‍💻 **Business Implementation (Developer Focus Areas)**
+- 🎯 **Domain Validation** - Business-specific validation rules and constraints
+- 📋 **Business Rules** - Domain logic, policies, state transitions
+- 🔍 **Custom Search** - Business-specific search criteria and filters
+- 🌐 **Business Endpoints** - Domain-specific API operations beyond standard CRUD
+- 🗂️ **Entity Mapping** - Pure business data transformation
 
 ### Technical Stack
 - **Framework**: Spring Boot 3.2.0
@@ -59,38 +79,98 @@ The {{serviceNameTitleCase}} is a production-ready microservice that provides co
 - **Containerization**: Docker
 - **Orchestration**: Kubernetes
 
-## 🏗️ Architecture
+## 🏗️ **Enterprise Framework Architecture**
 
 ```mermaid
 graph TB
     Client[Client Applications] --> LB[Load Balancer]
     LB --> API[{{serviceNameTitleCase}}]
 
-    API --> Cache[Caffeine Cache]
+    API --> Cache[Automatic Caching]
     API --> DB[{{#postgresql}}PostgreSQL{{/postgresql}}{{#mysql}}MySQL{{/mysql}}{{#h2}}H2 Database{{/h2}}]
-    API --> MQ[Message Queue]
+    API --> Events[Domain Events]
 
-    API --> Metrics[Prometheus Metrics]
-    API --> Logs[Application Logs]
+    API --> Metrics[Enterprise Metrics]
+    API --> Audit[Audit Logs]
 
-    subgraph "Application Layers"
-        Controller[REST Controllers]
-        Service[Business Services]
-        Repository[Data Repositories]
-        Entity[JPA Entities]
+    subgraph "🤖 INFRASTRUCTURE LAYER (Cannot be Modified)"
+        AbstractController[AbstractEnterpriseController]
+        AbstractService[AbstractEnterpriseService]
+        AbstractRepository[AbstractEnterpriseRepository]
+        EnterpriseAudit[EnterpriseAuditLogger]
+        EnterpriseMetrics[EnterpriseMetricsCollector]
+        EnterpriseEvents[EnterpriseEventPublisher]
     end
 
-    Controller --> Service
-    Service --> Repository
-    Repository --> Entity
+    subgraph "👨‍💻 BUSINESS LOGIC LAYER (Developer Implements)"
+        BusinessValidator[{{domainTitleCase}}BusinessValidator]
+        BusinessRules[{{domainTitleCase}}BusinessRules]
+        ServiceImpl[{{domainTitleCase}}ServiceImpl]
+        ControllerImpl[{{domainTitleCase}}Controller]
+        Entity[{{domainTitleCase}} Entity]
+    end
+
+    AbstractController --> AbstractService
+    AbstractService --> AbstractRepository
+    AbstractService --> BusinessValidator
+    AbstractService --> BusinessRules
+    AbstractService --> EnterpriseAudit
+    AbstractService --> EnterpriseMetrics
+    AbstractService --> EnterpriseEvents
+
+    ControllerImpl -.extends.-> AbstractController
+    ServiceImpl -.extends.-> AbstractService
+    Entity -.annotated.-> Enterprise[Enterprise Annotations]
 ```
 
-### Layer Responsibilities
+### 🏗️ **Layer Architecture Principles**
 
-- **Controller Layer**: HTTP request handling, validation, error responses
-- **Service Layer**: Business logic, transaction management, caching
-- **Repository Layer**: Data access, query optimization, database interactions
-- **Entity Layer**: Domain models, data validation, audit trails
+#### 🤖 **Infrastructure Layer (Framework - Cannot Modify)**
+- **AbstractEnterpriseController**: Standardized REST endpoints with final methods
+- **AbstractEnterpriseService**: Template Method pattern for CRUD operations (final methods)
+- **AbstractEnterpriseRepository**: JPA Specification patterns with enterprise queries
+- **Enterprise Infrastructure**: Audit, Metrics, Events - automatic operation
+
+**Key Constraint**: All infrastructure methods are `final` - developers cannot override or modify infrastructure behavior.
+
+#### 👨‍💻 **Business Logic Layer (Developer Implements)**
+- **{{domainTitleCase}}BusinessValidator**: Domain validation rules using Strategy pattern
+- **{{domainTitleCase}}BusinessRules**: Business logic and policies using Strategy pattern
+- **{{domainTitleCase}}ServiceImpl**: Business interface implementation extending AbstractEnterpriseService
+- **{{domainTitleCase}}Controller**: Business-specific endpoints extending AbstractEnterpriseController
+- **{{domainTitleCase}} Entity**: Domain model with @EnterpriseEntity configuration
+
+**Developer Focus**: 100% business logic implementation - infrastructure handled automatically.
+
+### 🔄 **Template Method Pattern Flow**
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Controller as AbstractEnterpriseController
+    participant Service as AbstractEnterpriseService
+    participant Validator as BusinessValidator
+    participant Rules as BusinessRules
+    participant Repository as AbstractEnterpriseRepository
+    participant Infrastructure as Enterprise Infrastructure
+
+    Client->>Controller: POST /{{domain}}s (final method)
+    Controller->>Service: create() (final method)
+
+    Service->>Infrastructure: Start audit/metrics
+    Service->>Validator: validateCreate() (abstract - dev implements)
+    Service->>Service: createEntityFromRequest() (abstract - dev implements)
+    Service->>Rules: applyCreateRules() (abstract - dev implements)
+    Service->>Repository: save() (final method)
+    Service->>Infrastructure: Publish events/update cache
+    Service->>Infrastructure: Complete audit/metrics
+
+    Service->>Controller: Response
+    Controller->>Client: JSON Response (final method)
+
+    Note over Service: 🤖 Infrastructure steps are final methods
+    Note over Validator,Rules: 👨‍💻 Business steps are abstract methods
+```
 
 ## 🚀 Quick Start
 
