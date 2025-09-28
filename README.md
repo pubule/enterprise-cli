@@ -607,7 +607,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🆘 Support
 
 ### Getting Help
-- 📖 [Documentation](https://docs.enterprise-cli.com)
+- 📖 **Complete Documentation**: [Master Documentation Index](./docs/INDEX.md)
+- 🏗️ **Architecture Guide**: [Enterprise Framework Architecture](./docs/Architecture/ARCHITECTURE.md)
+- 📊 **Monitoring Guide**: [Production Monitoring Setup](./docs/Monitoring%20&%20Operations/MONITORING_GUIDE.md)
+- 📋 **Commands Reference**: [All CLI Commands](./docs/Reference/COMMANDS.md)
+- 🎓 **Tutorial**: [Step-by-step Learning Guide](./docs/Getting%20Started/TUTORIAL.md)
 - 💬 [Community Forum](https://community.enterprise-cli.com)
 - 🐛 [Issue Tracker](https://github.com/enterprise/enterprise-cli/issues)
 

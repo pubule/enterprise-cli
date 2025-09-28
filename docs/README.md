@@ -236,11 +236,12 @@ enterprise deploy --environment staging --enterprise-framework
 
 ### Quick Reference
 - **Generate Framework**: `enterprise generate my-service --enterprise-framework`
-- **Implementation Guide**: [Enterprise Framework Guide](./ENTERPRISE_FRAMEWORK_GUIDE.md)
-- **Migration Guide**: [Migration Patterns](./MIGRATION_PATTERNS.md)
-- **Monitoring & Metrics**: [Monitoring Guide](./MONITORING_GUIDE.md)
-- **Audit & Compliance**: [Audit Trails Guide](./AUDIT_TRAILS_GUIDE.md)
-- **Dashboard Setup**: [Dashboard Setup Guide](./DASHBOARD_SETUP.md)
+- **Complete Documentation**: [Master Documentation Index](./INDEX.md)
+- **Implementation Guide**: [Enterprise Framework Guide](./Architecture/ENTERPRISE_FRAMEWORK_GUIDE.md)
+- **Migration Guide**: [Migration Patterns](./Architecture/MIGRATION_PATTERNS.md)
+- **Monitoring & Metrics**: [Monitoring Guide](./Monitoring%20&%20Operations/MONITORING_GUIDE.md)
+- **Audit & Compliance**: [Audit Trails Guide](./Monitoring%20&%20Operations/AUDIT_TRAILS_GUIDE.md)
+- **Dashboard Setup**: [Dashboard Setup Guide](./Monitoring%20&%20Operations/DASHBOARD_SETUP.md)
 
 ### Support Resources
 - 📖 **Documentation**: Complete guides in this directory
