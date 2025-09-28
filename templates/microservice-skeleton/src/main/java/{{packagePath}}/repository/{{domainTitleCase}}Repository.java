@@ -44,6 +44,26 @@ public interface {{domainTitleCase}}Repository extends JpaRepository<{{domainTit
     List<{{domainTitleCase}}> findByCreatedAtAfter(LocalDateTime date);
 
     /**
+     * Find {{domain}}s created between two dates
+     */
+    List<{{domainTitleCase}}> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    /**
+     * Find {{domain}}s by business ID
+     */
+    Optional<{{domainTitleCase}}> findByBusinessId(String businessId);
+
+    /**
+     * Find {{domain}}s by status
+     */
+    List<{{domainTitleCase}}> findByStatus(String status);
+
+    /**
+     * Find {{domain}}s by priority
+     */
+    List<{{domainTitleCase}}> findByPriority(Integer priority);
+
+    /**
      * Find {{domain}}s by name pattern (case-insensitive)
      */
     List<{{domainTitleCase}}> findByNameContainingIgnoreCase(String namePattern);

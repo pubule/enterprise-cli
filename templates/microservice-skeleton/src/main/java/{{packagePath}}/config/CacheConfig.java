@@ -33,14 +33,14 @@ public class CacheConfig {
         cacheManager.setCaffeine(defaultCacheBuilder());
 
         // Register cache names
-        cacheManager.setCacheNames(
+        cacheManager.setCacheNames(java.util.Arrays.asList(
                 "{{domain}}s",           // {{domainTitleCase}} entities
                 "{{domain}}sSearch",     // Search results
                 "{{domain}}sCount",      // Count queries
                 "metadata",              // Application metadata
                 "userSessions",          // User session data
                 "configurations"         // Configuration data
-        );
+        ));
 
         return cacheManager;
     }

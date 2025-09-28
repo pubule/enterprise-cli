@@ -78,10 +78,6 @@ public interface {{domainTitleCase}}Service {
      */
     List<{{domainTitleCase}}Response> getActive{{domainTitleCase}}s();
 
-    /**
-     * Convert entity to response DTO
-     */
-    {{domainTitleCase}}Response convertToResponse({{domainTitleCase}} entity);
 
     /**
      * Convert request DTO to entity

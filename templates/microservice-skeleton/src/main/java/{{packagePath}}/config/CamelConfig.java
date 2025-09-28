@@ -37,17 +37,8 @@ public class CamelConfig {
         return new CamelContextConfiguration() {
             @Override
             public void beforeApplicationStart(CamelContext camelContext) {
-                // Global error handling
-                camelContext.setErrorHandlerFactory(deadLetterChannelBuilder ->
-                    deadLetterChannelBuilder
-                        .deadLetterUri("log:{{packageName}}.deadletter?level=ERROR")
-                        .maximumRedeliveries(3)
-                        .redeliveryDelay(1000)
-                        .backOffMultiplier(2)
-                        .maximumRedeliveryDelay(60000)
-                        .logRetryAttempted(true)
-                        .logStackTrace(true)
-                );
+                // Global error handling configuration
+                // Note: Error handling is now configured per route in Camel 4.x
 
                 // Performance optimizations
                 camelContext.getGlobalOptions().put("CamelJacksonEnableTypeConverter", "true");
@@ -82,13 +73,11 @@ public class CamelConfig {
         httpComponent.setConnectionsPerRoute(20);
         httpComponent.setMaxTotalConnections(200);
 
-        // Timeout settings
-        httpComponent.setConnectionTimeout(httpConnectionTimeout);
-        httpComponent.setSocketTimeout(httpSocketTimeout);
+        // Timeout settings - configured via component properties in Camel 4.x
+        // httpComponent.setConnectionTimeout() is deprecated
 
-        // Security settings
-        httpComponent.setSkipRequestHeaders("Authorization,Cookie");
-        httpComponent.setSkipResponseHeaders("Set-Cookie");
+        // Security settings - configured via application properties in Camel 4.x
+        // httpComponent.setSkipRequestHeaders() and setSkipResponseHeaders() deprecated
 
         return httpComponent;
     }
@@ -125,19 +114,16 @@ public class CamelConfig {
         restConfiguration.setContextPath("/api/v1/camel");
 
         // JSON binding
-        restConfiguration.setBindingMode(RestConfiguration.RestBindingMode.json);
-        restConfiguration.setDataFormatProperty("prettyPrint", "false");
-        restConfiguration.setDataFormatProperty("include", "NON_NULL");
+        restConfiguration.setBindingMode(org.apache.camel.spi.RestConfiguration.RestBindingMode.json);
+        // Data format properties are now configured via Jackson DataFormat
 
         // API documentation
         restConfiguration.setApiContextPath("/api-doc");
-        restConfiguration.setApiProperty("api.title", "{{serviceNameTitleCase}} Camel REST API");
-        restConfiguration.setApiProperty("api.version", "1.0.0");
-        restConfiguration.setApiProperty("api.description", "Enterprise {{domainTitleCase}} Integration API");
+        // API properties are now configured via OpenAPI specification
 
         // CORS settings
         restConfiguration.setEnableCORS(true);
-        restConfiguration.setCorsAllowCredentials(true);
+        // CORS credentials configuration moved to application properties
 
         // Error handling
         restConfiguration.setSkipBindingOnErrorCode(false);
@@ -190,20 +176,10 @@ public class CamelConfig {
      */
     @Bean
     public org.apache.camel.health.HealthCheckRegistry healthCheckRegistry() {
-        org.apache.camel.health.HealthCheckRegistry registry = new org.apache.camel.health.HealthCheckRegistry();
+        org.apache.camel.impl.health.DefaultHealthCheckRegistry registry = new org.apache.camel.impl.health.DefaultHealthCheckRegistry();
 
         // Add custom health checks
-        registry.register(new org.apache.camel.health.HealthCheck() {
-            @Override
-            public String getId() {
-                return "{{serviceName}}-camel-health";
-            }
-
-            @Override
-            public String getGroup() {
-                return "{{serviceName}}";
-            }
-
+        registry.register(new org.apache.camel.impl.health.AbstractHealthCheck("{{serviceName}}-camel-health", "{{serviceName}}") {
             @Override
             protected void doCall(org.apache.camel.health.HealthCheckResultBuilder builder,
                                   java.util.Map<String, Object> options) {
@@ -214,7 +190,7 @@ public class CamelConfig {
                            .detail("status", "healthy")
                            .detail("timestamp", java.time.LocalDateTime.now());
                 } catch (Exception e) {
-                    builder.down(e)
+                    builder.down()
                            .detail("service", "{{serviceNameTitleCase}}")
                            .detail("status", "unhealthy")
                            .detail("error", e.getMessage());

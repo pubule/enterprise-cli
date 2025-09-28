@@ -3,6 +3,7 @@ package {{packageName}}.service;
 import {{packageName}}.dto.{{domainTitleCase}}Request;
 import {{packageName}}.dto.{{domainTitleCase}}Response;
 import {{packageName}}.entity.{{domainTitleCase}};
+import {{packageName}}.mapper.{{domainTitleCase}}Mapper;
 import {{packageName}}.repository.{{domainTitleCase}}Repository;
 import {{packageName}}.service.impl.{{domainTitleCase}}ServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +39,9 @@ class {{domainTitleCase}}ServiceTest {
 
     @Mock
     private {{domainTitleCase}}Repository {{domain}}Repository;
+
+    @Mock
+    private {{domainTitleCase}}Mapper {{domain}}Mapper;
 
     @InjectMocks
     private {{domainTitleCase}}ServiceImpl {{domain}}Service;
@@ -311,8 +315,8 @@ class {{domainTitleCase}}ServiceTest {
     @Test
     @DisplayName("Should convert entity to response DTO correctly")
     void shouldConvertEntityToResponseCorrectly() {
-        // When
-        {{domainTitleCase}}Response result = {{domain}}Service.convertToResponse(test{{domainTitleCase}});
+        // When - using mapper directly since convertToResponse is protected
+        {{domainTitleCase}}Response result = {{domain}}Mapper.toResponse(test{{domainTitleCase}});
 
         // Then
         assertThat(result).isNotNull();

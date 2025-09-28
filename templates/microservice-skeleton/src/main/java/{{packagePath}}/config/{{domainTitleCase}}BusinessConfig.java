@@ -31,60 +31,9 @@ import org.springframework.context.annotation.Configuration;
 public class {{domainTitleCase}}BusinessConfig {
 
     /**
-     * 👨‍💻 Configure business validator for the service
+     * 👨‍💻 Configure the service with business components via PostConstruct
+     * Business validator and rules are wired automatically via @PostConstruct in ServiceImpl
      */
-    @Bean
-    public AbstractEnterpriseService.BusinessValidatorProvider<{{domainTitleCase}}, {{domainTitleCase}}Request> {{domain}}BusinessValidatorProvider(
-            {{domainTitleCase}}BusinessValidator validator) {
-        return new AbstractEnterpriseService.BusinessValidatorProvider<>() {
-            @Override
-            public {{packageName}}.enterprise.validation.BusinessValidator<{{domainTitleCase}}, {{domainTitleCase}}Request, {{domainTitleCase}}Request> getValidator() {
-                return validator;
-            }
-        };
-    }
-
-    /**
-     * 👨‍💻 Configure business rules for the service
-     */
-    @Bean
-    public AbstractEnterpriseService.BusinessRulesProvider<{{domainTitleCase}}, {{domainTitleCase}}Request> {{domain}}BusinessRulesProvider(
-            {{domainTitleCase}}BusinessRules businessRules) {
-        return new AbstractEnterpriseService.BusinessRulesProvider<>() {
-            @Override
-            public {{packageName}}.enterprise.rules.BusinessRules<{{domainTitleCase}}, {{domainTitleCase}}Request, {{domainTitleCase}}Request> getRules() {
-                return businessRules;
-            }
-        };
-    }
-
-    /**
-     * 👨‍💻 Configure the service with business components
-     */
-    @Bean
-    public {{domainTitleCase}}ServiceConfigurator {{domain}}ServiceConfigurator(
-            {{domainTitleCase}}ServiceImpl service,
-            AbstractEnterpriseService.BusinessValidatorProvider<{{domainTitleCase}}, {{domainTitleCase}}Request> validatorProvider,
-            AbstractEnterpriseService.BusinessRulesProvider<{{domainTitleCase}}, {{domainTitleCase}}Request> rulesProvider) {
-
-        return new {{domainTitleCase}}ServiceConfigurator() {
-            @Override
-            public void configure() {
-                // Wire business validator
-                service.setBusinessValidator(validatorProvider.getValidator());
-
-                // Wire business rules
-                service.setBusinessRules(rulesProvider.getRules());
-            }
-        };
-    }
-
-    /**
-     * Service configurator interface
-     */
-    public interface {{domainTitleCase}}ServiceConfigurator {
-        void configure();
-    }
 
     // ================================
     // 👨‍💻 CUSTOM BUSINESS CONFIGURATION

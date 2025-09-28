@@ -52,6 +52,10 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
     @Autowired
     private EnterpriseAuditLogger auditLogger;
 
+    // Business components - set by concrete implementations
+    private BusinessValidator<T, CreateDTO, UpdateDTO> businessValidator;
+    private BusinessRules<T, CreateDTO, UpdateDTO> businessRules;
+
     // ================================
     // 🤖 INFRASTRUCTURE METHODS - DO NOT OVERRIDE
     // ================================
@@ -72,16 +76,26 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
             validateFrameworkConstraints(createDTO);
 
             // 👨‍💻 Business: Custom validation (developer implements)
-            validateBusinessRules(createDTO);
+            if (businessValidator != null) {
+                var validationResult = businessValidator.validateCreate(createDTO);
+                if (!validationResult.isValid()) {
+                    throw new BusinessValidationException(validationResult.getErrorMessage());
+                }
+            }
 
             // 👨‍💻 Business: Entity creation (developer implements)
-            T entity = createBusinessEntity(createDTO);
+            T entity = createEntityFromRequest(createDTO);
 
             // 🤖 Infrastructure: Apply enterprise rules
             applyEnterpriseRules(entity, "CREATE");
 
+            // 👨‍💻 Business: Apply business rules (developer implements)
+            if (businessRules != null) {
+                businessRules.applyCreateRules(entity, createDTO);
+            }
+
             // 🤖 Infrastructure: Persistence
-            T savedEntity = persistEntity(entity);
+            T savedEntity = getRepository().save(entity);
 
             // 🤖 Infrastructure: Event publishing
             eventPublisher.publishCreated(savedEntity);
@@ -90,15 +104,15 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
             handlePostCreation(savedEntity);
 
             // 🤖 Infrastructure: Convert to response DTO
-            ResponseDTO response = convertToResponseDTO(savedEntity);
+            ResponseDTO response = convertToResponse(savedEntity);
 
             // 🤖 Infrastructure: Metrics and audit
             metricsCollector.recordCreation(getEntityClass());
             auditLogger.logOperationSuccess("CREATE", getEntityClass().getSimpleName(),
-                                          getEntityId(savedEntity), response);
+                                          extractEntityId(savedEntity), response);
 
             logger.info("✅ Successfully created {} with ID: {}",
-                       getEntityClass().getSimpleName(), getEntityId(savedEntity));
+                       getEntityClass().getSimpleName(), extractEntityId(savedEntity));
 
             return response;
 
@@ -115,7 +129,7 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
             logger.error("💥 System error creating {}: {}", getEntityClass().getSimpleName(), e.getMessage(), e);
             throw new EnterpriseServiceException("Failed to create " + getEntityClass().getSimpleName(), e);
         } finally {
-            metricsCollector.stopCreationTimer(timer);
+            metricsCollector.stopCreationTimer(timer, getEntityClass());
         }
     }
 
@@ -131,12 +145,12 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
             logger.debug("🔍 Fetching {} with ID: {}", getEntityClass().getSimpleName(), id);
 
             // 👨‍💻 Business: Entity retrieval (developer implements)
-            Optional<T> entity = findEntityById(id);
+            Optional<T> entity = getRepository().findById(id);
 
             if (entity.isPresent()) {
                 // 🤖 Infrastructure: Metrics and response conversion
                 metricsCollector.recordRead(getEntityClass());
-                ResponseDTO response = convertToResponseDTO(entity.get());
+                ResponseDTO response = convertToResponse(entity.get());
 
                 logger.debug("✅ Found {} with ID: {}", getEntityClass().getSimpleName(), id);
                 return Optional.of(response);
@@ -146,7 +160,7 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
             }
 
         } finally {
-            metricsCollector.stopReadTimer(timer);
+            metricsCollector.stopReadTimer(timer, getEntityClass());
         }
     }
 
@@ -163,7 +177,7 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
             auditLogger.logOperationStart("UPDATE", getEntityClass().getSimpleName(), id, updateDTO);
 
             // 👨‍💻 Business: Find existing entity (developer implements)
-            Optional<T> existingEntityOpt = findEntityById(id);
+            Optional<T> existingEntityOpt = getRepository().findById(id);
 
             if (existingEntityOpt.isEmpty()) {
                 logger.warn("❌ {} not found for update with ID: {}", getEntityClass().getSimpleName(), id);
@@ -171,22 +185,32 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
             }
 
             T existingEntity = existingEntityOpt.get();
-            T previousState = cloneEntity(existingEntity);
+            T previousState = existingEntity; // Simplified for now
 
             // 🤖 Infrastructure: Framework validation
             validateFrameworkConstraints(updateDTO);
 
             // 👨‍💻 Business: Update validation (developer implements)
-            validateUpdateRules(id, updateDTO, existingEntity);
+            if (businessValidator != null) {
+                var validationResult = businessValidator.validateUpdate(id, updateDTO, existingEntity);
+                if (!validationResult.isValid()) {
+                    throw new BusinessValidationException(validationResult.getErrorMessage());
+                }
+            }
 
             // 👨‍💻 Business: Entity update (developer implements)
-            updateBusinessEntity(existingEntity, updateDTO);
+            updateEntityFromRequest(updateDTO, existingEntity);
 
             // 🤖 Infrastructure: Apply enterprise rules
             applyEnterpriseRules(existingEntity, "UPDATE");
 
+            // 👨‍💻 Business: Apply business rules (developer implements)
+            if (businessRules != null) {
+                businessRules.applyUpdateRules(existingEntity, updateDTO, previousState);
+            }
+
             // 🤖 Infrastructure: Persistence
-            T updatedEntity = persistEntity(existingEntity);
+            T updatedEntity = getRepository().save(existingEntity);
 
             // 🤖 Infrastructure: Event publishing
             eventPublisher.publishUpdated(previousState, updatedEntity);
@@ -195,7 +219,7 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
             handlePostUpdate(previousState, updatedEntity);
 
             // 🤖 Infrastructure: Convert to response DTO
-            ResponseDTO response = convertToResponseDTO(updatedEntity);
+            ResponseDTO response = convertToResponse(updatedEntity);
 
             // 🤖 Infrastructure: Metrics and audit
             metricsCollector.recordUpdate(getEntityClass());
@@ -216,7 +240,7 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
             logger.error("💥 System error updating {}: {}", getEntityClass().getSimpleName(), e.getMessage(), e);
             throw new EnterpriseServiceException("Failed to update " + getEntityClass().getSimpleName(), e);
         } finally {
-            metricsCollector.stopUpdateTimer(timer);
+            metricsCollector.stopUpdateTimer(timer, getEntityClass());
         }
     }
 
@@ -232,7 +256,7 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
             auditLogger.logOperationStart("DELETE", getEntityClass().getSimpleName(), id, null);
 
             // 👨‍💻 Business: Find entity to delete (developer implements)
-            Optional<T> entityOpt = findEntityById(id);
+            Optional<T> entityOpt = getRepository().findById(id);
 
             if (entityOpt.isEmpty()) {
                 logger.warn("❌ {} not found for deletion with ID: {}", getEntityClass().getSimpleName(), id);
@@ -241,14 +265,29 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
 
             T entity = entityOpt.get();
 
-            // 👨‍💻 Business: Deletion validation (developer implements)
-            validateDeleteRules(id, entity);
+            // 👨‍💻 Business: Validate deletion rules (developer implements)
+            if (businessValidator != null) {
+                var validationResult = businessValidator.validateDelete(id, entity);
+                if (!validationResult.isValid()) {
+                    throw new BusinessValidationException(validationResult.getErrorMessage());
+                }
+            }
+
+            // 👨‍💻 Business: Check if entity can be deleted (developer implements)
+            if (businessRules != null && !businessRules.canDelete(entity)) {
+                throw new BusinessValidationException("Entity cannot be deleted due to business rules");
+            }
 
             // 👨‍💻 Business: Pre-deletion business logic (developer can override)
             handlePreDeletion(entity);
 
+            // 👨‍💻 Business: Apply delete rules (developer implements)
+            if (businessRules != null) {
+                businessRules.applyDeleteRules(entity);
+            }
+
             // 🤖 Infrastructure: Physical deletion
-            deleteEntity(id);
+            getRepository().deleteById(id);
 
             // 🤖 Infrastructure: Event publishing
             eventPublisher.publishDeleted(entity);
@@ -275,7 +314,7 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
             logger.error("💥 System error deleting {}: {}", getEntityClass().getSimpleName(), e.getMessage(), e);
             throw new EnterpriseServiceException("Failed to delete " + getEntityClass().getSimpleName(), e);
         } finally {
-            metricsCollector.stopDeleteTimer(timer);
+            metricsCollector.stopDeleteTimer(timer, getEntityClass());
         }
     }
 
@@ -291,10 +330,10 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
             logger.debug("📋 Fetching {} list with pagination: {}", getEntityClass().getSimpleName(), pageable);
 
             // 👨‍💻 Business: Entity list retrieval (developer implements)
-            Page<T> entities = findAllEntities(pageable);
+            Page<T> entities = getRepository().findAll(pageable);
 
             // 🤖 Infrastructure: Convert to response DTOs
-            Page<ResponseDTO> response = entities.map(this::convertToResponseDTO);
+            Page<ResponseDTO> response = entities.map(this::convertToResponse);
 
             // 🤖 Infrastructure: Metrics
             metricsCollector.recordList(getEntityClass(), entities.getNumberOfElements());
@@ -304,7 +343,7 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
             return response;
 
         } finally {
-            metricsCollector.stopListTimer(timer);
+            metricsCollector.stopListTimer(timer, getEntityClass());
         }
     }
 
@@ -316,49 +355,46 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
      * 👨‍💻 IMPLEMENT: Create business entity from DTO
      * Focus on business logic only - infrastructure is handled automatically
      */
-    protected abstract T createBusinessEntity(CreateDTO createDTO);
+    protected abstract org.springframework.data.jpa.repository.JpaRepository<T, ID> getRepository();
 
     /**
      * 👨‍💻 IMPLEMENT: Validate business rules for creation
      * Throw BusinessValidationException for validation failures
      */
-    protected abstract void validateBusinessRules(CreateDTO createDTO);
+    protected abstract T createEntityFromRequest(CreateDTO createDTO);
 
     /**
      * 👨‍💻 IMPLEMENT: Find entity by ID
      * Use repository or any data access pattern you prefer
      */
-    protected abstract Optional<T> findEntityById(ID id);
+    protected abstract void updateEntityFromRequest(UpdateDTO updateDTO, T entity);
 
     /**
      * 👨‍💻 IMPLEMENT: Validate business rules for update
      * Throw BusinessValidationException for validation failures
      */
-    protected abstract void validateUpdateRules(ID id, UpdateDTO updateDTO, T existingEntity);
+    protected abstract ResponseDTO convertToResponse(T entity);
 
     /**
      * 👨‍💻 IMPLEMENT: Update business entity with DTO data
      * Focus on business logic only
      */
-    protected abstract void updateBusinessEntity(T entity, UpdateDTO updateDTO);
+    protected abstract ID extractEntityId(T entity);
 
     /**
      * 👨‍💻 IMPLEMENT: Validate business rules for deletion
      * Throw BusinessValidationException for validation failures
      */
-    protected abstract void validateDeleteRules(ID id, T entity);
+    // Setter methods for business components
 
-    /**
-     * 👨‍💻 IMPLEMENT: Find all entities with pagination
-     * Use repository or any data access pattern you prefer
-     */
-    protected abstract Page<T> findAllEntities(Pageable pageable);
+    // Setter methods for business components
+    protected void setBusinessValidator(BusinessValidator<T, CreateDTO, UpdateDTO> businessValidator) {
+        this.businessValidator = businessValidator;
+    }
 
-    /**
-     * 👨‍💻 IMPLEMENT: Convert entity to response DTO
-     * Use mapper or manual conversion
-     */
-    protected abstract ResponseDTO convertToResponseDTO(T entity);
+    protected void setBusinessRules(BusinessRules<T, CreateDTO, UpdateDTO> businessRules) {
+        this.businessRules = businessRules;
+    }
 
     /**
      * 👨‍💻 IMPLEMENT: Get entity class for metrics and logging
@@ -368,7 +404,6 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
     /**
      * 👨‍💻 IMPLEMENT: Get entity ID for auditing
      */
-    protected abstract ID getEntityId(T entity);
 
     // ================================
     // 🔧 EXTENSION POINTS - OVERRIDE IF NEEDED

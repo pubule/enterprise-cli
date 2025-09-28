@@ -104,9 +104,7 @@ public class ResilienceConfig {
     public RetryRegistry retryRegistry() {
         RetryConfig config = RetryConfig.custom()
                 .maxAttempts(3)
-                .waitDuration(Duration.ofSeconds(2))
-                .intervalFunction(io.github.resilience4j.retry.IntervalFunction.ofExponentialBackoff(
-                    Duration.ofMillis(500), 2))          // Exponential backoff
+                .waitDuration(Duration.ofMillis(500))     // Fixed wait duration
                 .retryOnResult(response -> response == null)
                 .retryExceptions(TimeoutException.class,
                                java.net.ConnectException.class,
@@ -136,9 +134,7 @@ public class ResilienceConfig {
     public Retry externalApiRetry(RetryRegistry registry) {
         RetryConfig config = RetryConfig.custom()
                 .maxAttempts(5)
-                .waitDuration(Duration.ofSeconds(1))
-                .intervalFunction(io.github.resilience4j.retry.IntervalFunction.ofExponentialRandomBackoff(
-                    Duration.ofMillis(500), 2, Duration.ofSeconds(5)))
+                .waitDuration(Duration.ofSeconds(1))     // Fixed wait duration for external APIs
                 .build();
 
         return registry.retry("external-api", config);

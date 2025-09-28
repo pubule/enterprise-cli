@@ -62,7 +62,7 @@ public class BatchController {
             logger.info("Starting batch processing of all {{domain}}s with chunk size: {}", chunkSize);
 
             // Example processor - customize this logic
-            var processor = ({{packageName}}.entity.{{domainTitleCase}} entity) -> {
+            java.util.function.Function<{{packageName}}.entity.{{domainTitleCase}}, {{packageName}}.entity.{{domainTitleCase}}> processor = (entity) -> {
                 // Add your custom processing logic here
                 // Example: entity.setLastProcessed(LocalDateTime.now());
                 return entity;
@@ -107,7 +107,7 @@ public class BatchController {
             logger.info("Starting batch processing by date range: {} to {}", startDate, endDate);
 
             // Example processor - customize this logic
-            var processor = ({{packageName}}.entity.{{domainTitleCase}} entity) -> {
+            java.util.function.Function<{{packageName}}.entity.{{domainTitleCase}}, {{packageName}}.entity.{{domainTitleCase}}> processor = (entity) -> {
                 // Add your custom processing logic here
                 return entity;
             };
@@ -157,7 +157,7 @@ public class BatchController {
             logger.info("Starting bulk update of {} {{domain}}s", entityIds.size());
 
             // Example updater - customize this logic
-            var updater = ({{packageName}}.entity.{{domainTitleCase}} entity) -> {
+            java.util.function.Function<{{packageName}}.entity.{{domainTitleCase}}, {{packageName}}.entity.{{domainTitleCase}}> updater = (entity) -> {
                 // Add your custom update logic here
                 // Example: entity.setLastUpdated(LocalDateTime.now());
                 return entity;
@@ -199,7 +199,7 @@ public class BatchController {
             logger.info("Starting data migration with chunk size: {}", chunkSize);
 
             // Example migrator - customize this logic
-            var migrator = ({{packageName}}.entity.{{domainTitleCase}} entity) -> {
+            java.util.function.Function<{{packageName}}.entity.{{domainTitleCase}}, {{packageName}}.entity.{{domainTitleCase}}> migrator = (entity) -> {
                 // Add your custom migration logic here
                 // Example: Convert old data format to new format
                 return entity;

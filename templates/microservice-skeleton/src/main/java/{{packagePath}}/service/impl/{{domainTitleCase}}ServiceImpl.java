@@ -16,7 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -67,16 +67,14 @@ public class {{domainTitleCase}}ServiceImpl
     // ================================
 
     @Override
-    protected {{domainTitleCase}}Repository getRepository() {
+    protected org.springframework.data.jpa.repository.JpaRepository<{{domainTitleCase}}, String> getRepository() {
         return {{domain}}Repository;
     }
 
-    @Override
     protected String getEntityName() {
         return "{{domainTitleCase}}";
     }
 
-    @Override
     protected Class<{{domainTitleCase}}> getEntityClass() {
         return {{domainTitleCase}}.class;
     }
@@ -96,12 +94,10 @@ public class {{domainTitleCase}}ServiceImpl
         return {{domain}}Mapper.toResponse(entity);
     }
 
-    @Override
     protected Page<{{domainTitleCase}}Response> convertToResponsePage(Page<{{domainTitleCase}}> entityPage) {
         return entityPage.map({{domain}}Mapper::toResponse);
     }
 
-    @Override
     protected List<{{domainTitleCase}}Response> convertToResponseList(List<{{domainTitleCase}}> entities) {
         return {{domain}}Mapper.toResponseList(entities);
     }
@@ -132,7 +128,7 @@ public class {{domainTitleCase}}ServiceImpl
 
     @Override
     public List<{{domainTitleCase}}Response> getAll{{domainTitleCase}}s() {
-        return findAll();
+        return convertToResponseList({{domain}}Repository.findAll());
     }
 
     @Override
@@ -181,11 +177,6 @@ public class {{domainTitleCase}}ServiceImpl
     }
 
     @Override
-    public {{domainTitleCase}}Response convertToResponse({{domainTitleCase}} entity) {
-        return {{domain}}Mapper.toResponse(entity);
-    }
-
-    @Override
     public {{domainTitleCase}} convertToEntity({{domainTitleCase}}Request request) {
         return {{domain}}Mapper.toEntity(request);
     }
@@ -194,7 +185,10 @@ public class {{domainTitleCase}}ServiceImpl
     // 🔧 BUSINESS SEARCH CUSTOMIZATION
     // ================================
 
-    @Override
+    protected List<{{domainTitleCase}}Response> search(Map<String, String> searchParams) {
+        return convertToResponseList(performCustomSearch(searchParams));
+    }
+
     protected List<{{domainTitleCase}}> performCustomSearch(Map<String, String> searchParams) {
         String searchText = searchParams.get("search");
         if (searchText != null && !searchText.trim().isEmpty()) {

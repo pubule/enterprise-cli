@@ -214,7 +214,7 @@ class {{domainTitleCase}}RepositoryTest {
 
         // Then
         Optional<{{domainTitleCase}}> deleted{{domainTitleCase}} = {{domain}}Repository.findById({{domain}}Id);
-        assertThat(deleted{{domainTitleCase}}}).isEmpty();
+        assertThat(deleted{{domainTitleCase}}).isEmpty();
 
         // Verify other {{domain}} still exists
         List<{{domainTitleCase}}> remaining{{domainTitleCase}}s = {{domain}}Repository.findAll();

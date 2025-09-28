@@ -5,7 +5,10 @@ import {{packageName}}.enterprise.patterns.EnterpriseEventPublisher;
 import {{packageName}}.enterprise.patterns.EnterpriseMetricsCollector;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +29,24 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class EnterpriseFrameworkConfiguration {
+
+    /**
+     * 🤖 Meter registry for metrics collection
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public MeterRegistry meterRegistry() {
+        return new SimpleMeterRegistry();
+    }
+
+    /**
+     * 🤖 Cache manager for caching support
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public CacheManager cacheManager() {
+        return new ConcurrentMapCacheManager("default", "enterprise", "rateLimit");
+    }
 
     /**
      * 🤖 Enterprise audit logger bean

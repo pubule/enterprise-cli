@@ -1,10 +1,8 @@
 package {{packageName}};
 
+import {{packageName}}.enterprise.annotations.EnableEnterpriseFramework;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
  * {{serviceNameTitleCase}} Spring Boot Application
@@ -15,9 +13,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * It includes enterprise-ready configurations for JPA, transactions, and security.
  */
 @SpringBootApplication
-@EnableJpaRepositories(basePackages = "{{packageName}}.repository")
-@EntityScan(basePackages = "{{packageName}}.entity")
-@EnableTransactionManagement
+@EnableEnterpriseFramework
 public class {{serviceNameTitleCase}}Application {
 
     public static void main(String[] args) {

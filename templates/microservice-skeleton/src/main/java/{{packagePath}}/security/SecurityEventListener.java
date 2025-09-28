@@ -69,7 +69,7 @@ public class SecurityEventListener {
      */
     @EventListener
     public void handleAuthorizationDenied(AuthorizationDeniedEvent event) {
-        String username = event.getAuthentication().getName();
+        String username = event.getAuthentication().get().getName();
         String resource = extractResourceFromEvent(event);
         String action = extractActionFromEvent(event);
         String denialReason = "Insufficient privileges";

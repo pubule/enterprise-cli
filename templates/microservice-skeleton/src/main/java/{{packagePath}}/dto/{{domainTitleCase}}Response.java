@@ -23,6 +23,18 @@ public class {{domainTitleCase}}Response {
     @Schema(description = "Description of the {{domain}}", example = "This is a sample {{domain}} description")
     private String description;
 
+    @Schema(description = "Business identifier for the {{domain}}", example = "{{domainTitleCase|upper}}-001")
+    private String businessId;
+
+    @Schema(description = "Status of the {{domain}}", example = "ACTIVE")
+    private String status;
+
+    @Schema(description = "Display name for the {{domain}}", example = "{{domainTitleCase}} Display Name")
+    private String displayName;
+
+    @Schema(description = "Priority level for the {{domain}}", example = "1")
+    private Integer priority;
+
     @Schema(description = "Creation timestamp", example = "2023-12-01T10:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
@@ -36,10 +48,14 @@ public class {{domainTitleCase}}Response {
     }
 
     // Constructor with all fields
-    public {{domainTitleCase}}Response(String id, String name, String description, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public {{domainTitleCase}}Response(String id, String name, String description, String businessId, String status, String displayName, Integer priority, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.name = name;
         this.description = description;
+        this.businessId = businessId;
+        this.status = status;
+        this.displayName = displayName;
+        this.priority = priority;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -69,6 +85,38 @@ public class {{domainTitleCase}}Response {
         this.description = description;
     }
 
+    public String getBusinessId() {
+        return businessId;
+    }
+
+    public void setBusinessId(String businessId) {
+        this.businessId = businessId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public Integer getPriority() {
+        return priority;
+    }
+
+    public void setPriority(Integer priority) {
+        this.priority = priority;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -91,6 +139,10 @@ public class {{domainTitleCase}}Response {
                 "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
+                ", businessId='" + businessId + '\'' +
+                ", status='" + status + '\'' +
+                ", displayName='" + displayName + '\'' +
+                ", priority=" + priority +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 '}';

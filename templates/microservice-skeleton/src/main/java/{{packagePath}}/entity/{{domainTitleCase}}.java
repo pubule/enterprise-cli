@@ -56,6 +56,51 @@ public class {{domainTitleCase}} {
     @Column(name = "description", length = 500)
     private String description;
 
+    @NotBlank(message = "Business ID is required")
+    @Size(min = 3, max = 50, message = "Business ID must be between 3 and 50 characters")
+    @Column(name = "business_id", nullable = false, unique = true, length = 50)
+    private String businessId;
+
+    @NotBlank(message = "Status is required")
+    @Size(max = 20, message = "Status cannot exceed 20 characters")
+    @Column(name = "status", nullable = false, length = 20)
+    private String status;
+
+    @Size(max = 100, message = "Display name cannot exceed 100 characters")
+    @Column(name = "display_name", length = 100)
+    private String displayName;
+
+    @Column(name = "priority")
+    private Integer priority;
+
+    @Size(max = 50, message = "Category cannot exceed 50 characters")
+    @Column(name = "category", length = 50)
+    private String category;
+
+    @Column(name = "business_score")
+    private Double businessScore;
+
+    @Column(name = "modification_count")
+    private Integer modificationCount = 0;
+
+    @Column(name = "status_changed_at")
+    private LocalDateTime statusChangedAt;
+
+    @Column(name = "last_calculated_at")
+    private LocalDateTime lastCalculatedAt;
+
+    @Column(name = "last_significant_change")
+    private LocalDateTime lastSignificantChange;
+
+    @Column(name = "activated_at")
+    private LocalDateTime activatedAt;
+
+    @Column(name = "deactivated_at")
+    private LocalDateTime deactivatedAt;
+
+    @Column(name = "archived_at")
+    private LocalDateTime archivedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -73,14 +118,20 @@ public class {{domainTitleCase}} {
     }
 
     // Constructor with required fields
-    public {{domainTitleCase}}(String name) {
+    public {{domainTitleCase}}(String name, String businessId, String status) {
         this.name = name;
+        this.businessId = businessId;
+        this.status = status;
     }
 
     // Constructor with all fields except auto-generated
-    public {{domainTitleCase}}(String name, String description) {
+    public {{domainTitleCase}}(String name, String description, String businessId, String status, String displayName, Integer priority) {
         this.name = name;
         this.description = description;
+        this.businessId = businessId;
+        this.status = status;
+        this.displayName = displayName;
+        this.priority = priority;
     }
 
     // Getters and Setters
@@ -108,6 +159,38 @@ public class {{domainTitleCase}} {
         this.description = description;
     }
 
+    public String getBusinessId() {
+        return businessId;
+    }
+
+    public void setBusinessId(String businessId) {
+        this.businessId = businessId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public Integer getPriority() {
+        return priority;
+    }
+
+    public void setPriority(Integer priority) {
+        this.priority = priority;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -132,6 +215,78 @@ public class {{domainTitleCase}} {
         this.version = version;
     }
 
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public Double getBusinessScore() {
+        return businessScore;
+    }
+
+    public void setBusinessScore(Double businessScore) {
+        this.businessScore = businessScore;
+    }
+
+    public Integer getModificationCount() {
+        return modificationCount;
+    }
+
+    public void setModificationCount(Integer modificationCount) {
+        this.modificationCount = modificationCount;
+    }
+
+    public LocalDateTime getStatusChangedAt() {
+        return statusChangedAt;
+    }
+
+    public void setStatusChangedAt(LocalDateTime statusChangedAt) {
+        this.statusChangedAt = statusChangedAt;
+    }
+
+    public LocalDateTime getLastCalculatedAt() {
+        return lastCalculatedAt;
+    }
+
+    public void setLastCalculatedAt(LocalDateTime lastCalculatedAt) {
+        this.lastCalculatedAt = lastCalculatedAt;
+    }
+
+    public LocalDateTime getLastSignificantChange() {
+        return lastSignificantChange;
+    }
+
+    public void setLastSignificantChange(LocalDateTime lastSignificantChange) {
+        this.lastSignificantChange = lastSignificantChange;
+    }
+
+    public LocalDateTime getActivatedAt() {
+        return activatedAt;
+    }
+
+    public void setActivatedAt(LocalDateTime activatedAt) {
+        this.activatedAt = activatedAt;
+    }
+
+    public LocalDateTime getDeactivatedAt() {
+        return deactivatedAt;
+    }
+
+    public void setDeactivatedAt(LocalDateTime deactivatedAt) {
+        this.deactivatedAt = deactivatedAt;
+    }
+
+    public LocalDateTime getArchivedAt() {
+        return archivedAt;
+    }
+
+    public void setArchivedAt(LocalDateTime archivedAt) {
+        this.archivedAt = archivedAt;
+    }
+
     // equals and hashCode
     @Override
     public boolean equals(Object o) {
@@ -152,6 +307,19 @@ public class {{domainTitleCase}} {
                 "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
+                ", businessId='" + businessId + '\'' +
+                ", status='" + status + '\'' +
+                ", displayName='" + displayName + '\'' +
+                ", priority=" + priority +
+                ", category='" + category + '\'' +
+                ", businessScore=" + businessScore +
+                ", modificationCount=" + modificationCount +
+                ", statusChangedAt=" + statusChangedAt +
+                ", lastCalculatedAt=" + lastCalculatedAt +
+                ", lastSignificantChange=" + lastSignificantChange +
+                ", activatedAt=" + activatedAt +
+                ", deactivatedAt=" + deactivatedAt +
+                ", archivedAt=" + archivedAt +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 ", version=" + version +

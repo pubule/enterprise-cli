@@ -6,6 +6,7 @@ import {{packageName}}.service.{{domainTitleCase}}Service;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.jackson.JacksonDataFormat;
 import org.apache.camel.model.dataformat.JsonLibrary;
+import org.apache.camel.LoggingLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,9 +46,9 @@ public class {{domainTitleCase}}Routes extends RouteBuilder {
                 .routeId("{{domain}}-creation-route")
                 .log(LoggingLevel.INFO, logger, "Processing {{domain}} creation request")
                 .unmarshal().json(JsonLibrary.Jackson, {{domainTitleCase}}Request.class)
-                .validate(body().isNotNull())
-                .validate(simple("${body.name} != null"))
-                .bean({{domain}}Service, "create{{domainTitleCase}}")
+                .validate().simple("${body} != null")
+                .validate().simple("${body.name} != null")
+                .bean({{domain}}Service, "create")
                 .marshal().json(JsonLibrary.Jackson)
                 .log(LoggingLevel.INFO, logger, "Successfully created {{domain}}: ${body}");
 
@@ -56,8 +57,8 @@ public class {{domainTitleCase}}Routes extends RouteBuilder {
                 .routeId("{{domain}}-update-route")
                 .log(LoggingLevel.INFO, logger, "Processing {{domain}} update request for ID: ${header.{{domain}}Id}")
                 .unmarshal().json(JsonLibrary.Jackson, {{domainTitleCase}}Request.class)
-                .validate(body().isNotNull())
-                .validate(header("{{domain}}Id").isNotNull())
+                .validate().simple("${body} != null")
+                .validate().simple("${header.{{domain}}Id} != null")
                 .process(exchange -> {
                     String {{domain}}Id = exchange.getIn().getHeader("{{domain}}Id", String.class);
                     {{domainTitleCase}}Request request = exchange.getIn().getBody({{domainTitleCase}}Request.class);
@@ -74,7 +75,7 @@ public class {{domainTitleCase}}Routes extends RouteBuilder {
         from("direct:process-{{domain}}-deletion")
                 .routeId("{{domain}}-deletion-route")
                 .log(LoggingLevel.INFO, logger, "Processing {{domain}} deletion request for ID: ${header.{{domain}}Id}")
-                .validate(header("{{domain}}Id").isNotNull())
+                .validate().simple("${header.{{domain}}Id} != null")
                 .process(exchange -> {
                     String {{domain}}Id = exchange.getIn().getHeader("{{domain}}Id", String.class);
                     boolean deleted = {{domain}}Service.delete{{domainTitleCase}}({{domain}}Id);
@@ -92,7 +93,7 @@ public class {{domainTitleCase}}Routes extends RouteBuilder {
         from("timer://{{domain}}-sync?period=300000") // Every 5 minutes
                 .routeId("{{domain}}-sync-route")
                 .log(LoggingLevel.INFO, logger, "Starting {{domain}} synchronization")
-                .bean({{domain}}Service, "getAll{{domainTitleCase}}s()")
+                .bean({{domain}}Service, "getAll{{domainTitleCase}}s")
                 .marshal().json(JsonLibrary.Jackson)
                 .to("log:{{domain}}-sync?level=DEBUG")
                 // Add your external system endpoint here
@@ -103,7 +104,7 @@ public class {{domainTitleCase}}Routes extends RouteBuilder {
         from("timer://{{domain}}-health?period=60000") // Every minute
                 .routeId("{{domain}}-health-route")
                 .process(exchange -> {
-                    long count = {{domain}}Service.getAll{{domainTitleCase}}s().size();
+                    long count = {{domain}}Service.getAll{{domainTitleCase}}s(org.springframework.data.domain.Pageable.unpaged()).getTotalElements();
                     exchange.getIn().setBody("{\"service\":\"{{domain}}-service\",\"status\":\"healthy\",\"{{domain}}Count\":" + count + "}");
                     exchange.getIn().setHeader("Content-Type", "application/json");
                 })
@@ -123,7 +124,7 @@ public class {{domainTitleCase}}Routes extends RouteBuilder {
         from("direct:search-{{domain}}s")
                 .routeId("{{domain}}-search-route")
                 .log(LoggingLevel.INFO, logger, "Searching {{domain}}s with criteria: ${header.searchText}")
-                .validate(header("searchText").isNotNull())
+                .validate().simple("${header.searchText} != null")
                 .process(exchange -> {
                     String searchText = exchange.getIn().getHeader("searchText", String.class);
                     exchange.getIn().setBody({{domain}}Service.search{{domainTitleCase}}s(searchText));

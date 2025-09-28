@@ -97,20 +97,20 @@ public class {{domainTitleCase}}MetricsService {
                 .register(meterRegistry);
 
         // Initialize gauges
-        Gauge.builder("{{domain}}.total.count")
+        Gauge.builder("{{domain}}.total.count", this, {{domainTitleCase}}MetricsService::getTotalCount)
                 .description("Total number of {{domain}}s in the system")
                 .tag("service", "{{serviceName}}")
-                .register(meterRegistry, this, {{domainTitleCase}}MetricsService::getTotalCount);
+                .register(meterRegistry);
 
-        Gauge.builder("{{domain}}.active.count")
+        Gauge.builder("{{domain}}.active.count", this, {{domainTitleCase}}MetricsService::getActiveCount)
                 .description("Number of active {{domain}}s")
                 .tag("service", "{{serviceName}}")
-                .register(meterRegistry, this, {{domainTitleCase}}MetricsService::getActiveCount);
+                .register(meterRegistry);
 
-        Gauge.builder("{{domain}}.recent.count")
+        Gauge.builder("{{domain}}.recent.count", this, {{domainTitleCase}}MetricsService::getRecentCount)
                 .description("Number of {{domain}}s created in the last hour")
                 .tag("service", "{{serviceName}}")
-                .register(meterRegistry, this, {{domainTitleCase}}MetricsService::getRecentCount);
+                .register(meterRegistry);
 
         // Initialize current counts
         updateCounts();

@@ -22,14 +22,40 @@ public class {{domainTitleCase}}Request {
     @Size(max = 500, message = "{{domainTitleCase}} description cannot exceed 500 characters")
     private String description;
 
+    @Schema(description = "Business identifier for the {{domain}}", example = "{{domainTitleCase|upper}}-001", required = true)
+    @NotBlank(message = "Business ID is required")
+    @Size(min = 3, max = 50, message = "Business ID must be between 3 and 50 characters")
+    private String businessId;
+
+    @Schema(description = "Status of the {{domain}}", example = "ACTIVE", required = true)
+    @NotBlank(message = "Status is required")
+    @Size(max = 20, message = "Status cannot exceed 20 characters")
+    private String status;
+
+    @Schema(description = "Display name for the {{domain}}", example = "{{domainTitleCase}} Display Name")
+    @Size(max = 100, message = "Display name cannot exceed 100 characters")
+    private String displayName;
+
+    @Schema(description = "Priority level for the {{domain}}", example = "1")
+    private Integer priority;
+
+    @Schema(description = "Category of the {{domain}}", example = "STANDARD")
+    @Size(max = 50, message = "Category cannot exceed 50 characters")
+    private String category;
+
     // Default constructor
     public {{domainTitleCase}}Request() {
     }
 
     // Constructor with all fields
-    public {{domainTitleCase}}Request(String name, String description) {
+    public {{domainTitleCase}}Request(String name, String description, String businessId, String status, String displayName, Integer priority, String category) {
         this.name = name;
         this.description = description;
+        this.businessId = businessId;
+        this.status = status;
+        this.displayName = displayName;
+        this.priority = priority;
+        this.category = category;
     }
 
     // Getters and Setters
@@ -49,11 +75,56 @@ public class {{domainTitleCase}}Request {
         this.description = description;
     }
 
+    public String getBusinessId() {
+        return businessId;
+    }
+
+    public void setBusinessId(String businessId) {
+        this.businessId = businessId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public Integer getPriority() {
+        return priority;
+    }
+
+    public void setPriority(Integer priority) {
+        this.priority = priority;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
     @Override
     public String toString() {
         return "{{domainTitleCase}}Request{" +
                 "name='" + name + '\'' +
                 ", description='" + description + '\'' +
+                ", businessId='" + businessId + '\'' +
+                ", status='" + status + '\'' +
+                ", displayName='" + displayName + '\'' +
+                ", priority=" + priority +
+                ", category='" + category + '\'' +
                 '}';
     }
 }
