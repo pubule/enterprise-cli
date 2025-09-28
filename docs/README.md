@@ -197,11 +197,13 @@ enterprise deploy --environment staging --enterprise-framework
 ### Automatic Infrastructure (🤖 - No Developer Action)
 - **Transactions**: Automatic transaction boundaries for all operations
 - **Caching**: Entity-level caching with automatic invalidation
-- **Metrics**: Business and technical metrics collection
-- **Audit**: Comprehensive JSON audit events for compliance
+- **Metrics**: Business and technical metrics collection with Prometheus
+- **Audit**: Comprehensive JSON audit events for compliance (SOX, GDPR, HIPAA)
 - **Events**: Domain event publishing with correlation
 - **Security**: Input validation, error handling, security headers
 - **Performance**: Automatic optimization, slow query detection
+- **Monitoring**: Complete Grafana + Prometheus + ELK Stack with pre-built dashboards
+- **Health Checks**: Automatic liveness/readiness probes for Kubernetes
 
 ### Business Implementation (👨‍💻 - Developer Required)
 - **Validation**: Domain-specific business validation rules
@@ -236,6 +238,9 @@ enterprise deploy --environment staging --enterprise-framework
 - **Generate Framework**: `enterprise generate my-service --enterprise-framework`
 - **Implementation Guide**: [Enterprise Framework Guide](./ENTERPRISE_FRAMEWORK_GUIDE.md)
 - **Migration Guide**: [Migration Patterns](./MIGRATION_PATTERNS.md)
+- **Monitoring & Metrics**: [Monitoring Guide](./MONITORING_GUIDE.md)
+- **Audit & Compliance**: [Audit Trails Guide](./AUDIT_TRAILS_GUIDE.md)
+- **Dashboard Setup**: [Dashboard Setup Guide](./DASHBOARD_SETUP.md)
 
 ### Support Resources
 - 📖 **Documentation**: Complete guides in this directory
@@ -250,6 +255,9 @@ enterprise deploy --environment staging --enterprise-framework
 - ✅ Business validation and rules framework
 - ✅ Template Method pattern for services and controllers
 - ✅ Automatic audit, metrics, events, caching
+- ✅ Complete monitoring stack with Grafana + Prometheus + ELK
+- ✅ Pre-built dashboards and alert rules for enterprise monitoring
+- ✅ Compliance-grade audit trails (SOX, GDPR, HIPAA, PCI DSS)
 
 ### Next (2.1.0) - Advanced Patterns
 - 🔄 GraphQL Enterprise Framework with same principles
