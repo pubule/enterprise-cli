@@ -26,14 +26,14 @@ public class SchedulingConfig implements SchedulingConfigurer {
 
     @Override
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-        taskRegistrar.setScheduler(taskExecutor());
+        taskRegistrar.setScheduler(scheduledTaskExecutor());
     }
 
     /**
      * Task scheduler configuration
      */
     @Bean
-    public Executor taskExecutor() {
+    public Executor scheduledTaskExecutor() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 
         // Pool configuration

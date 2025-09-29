@@ -36,12 +36,7 @@ spring:
   flyway:
     enabled: false # Disabled for tests to use JPA DDL auto-creation
 
-  # Security Configuration for Tests
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:8080/realms/test
+  # Security Configuration for Tests - Disabled for faster test execution
 
   # H2 Console for debugging (test only)
   h2:

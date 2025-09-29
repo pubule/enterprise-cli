@@ -80,6 +80,27 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle static resource not found exceptions (e.g., missing CSS, JS files)
+     * This prevents logging normal 404s for static resources as errors
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFoundException(NoResourceFoundException ex, WebRequest request) {
+        // Don't log static resource 404s as errors - they're normal
+        logger.debug("Static resource not found: {}", ex.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.NOT_FOUND.value())
+                .error(HttpStatus.NOT_FOUND.getReasonPhrase())
+                .message("Resource not found")
+                .path(getPath(request))
+                .code("STATIC_RESOURCE_NOT_FOUND")
+                .build();
+
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    /**
      * Handle validation errors from @Valid annotations
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)

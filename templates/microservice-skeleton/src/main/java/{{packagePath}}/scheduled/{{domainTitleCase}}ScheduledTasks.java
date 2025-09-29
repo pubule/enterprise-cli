@@ -1,11 +1,14 @@
 package {{packageName}}.scheduled;
 
+import {{packageName}}.dto.{{domainTitleCase}}Response;
 import {{packageName}}.monitoring.{{domainTitleCase}}MetricsService;
 import {{packageName}}.service.{{domainTitleCase}}Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -69,7 +72,8 @@ public class {{domainTitleCase}}ScheduledTasks {
 
         try {
             // Collect current counts
-            long totalCount = {{domain}}Service.getAll{{domainTitleCase}}s().size();
+            Page<{{domainTitleCase}}Response> totalPage = {{domain}}Service.findAll(Pageable.unpaged());
+            long totalCount = totalPage.getTotalElements();
             long activeCount = {{domain}}Service.getActive{{domainTitleCase}}s().size();
 
             metricsService.recordBusinessMetric("total_{{domain}}_count", totalCount);

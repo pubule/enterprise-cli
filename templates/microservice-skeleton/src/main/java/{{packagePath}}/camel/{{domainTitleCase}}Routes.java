@@ -63,7 +63,7 @@ public class {{domainTitleCase}}Routes extends RouteBuilder {
                     String {{domain}}Id = exchange.getIn().getHeader("{{domain}}Id", String.class);
                     {{domainTitleCase}}Request request = exchange.getIn().getBody({{domainTitleCase}}Request.class);
 
-                    {{domainTitleCase}}Response response = {{domain}}Service.update{{domainTitleCase}}({{domain}}Id, request)
+                    {{domainTitleCase}}Response response = {{domain}}Service.update({{domain}}Id, request)
                             .orElseThrow(() -> new RuntimeException("{{domainTitleCase}} not found with ID: " + {{domain}}Id));
 
                     exchange.getIn().setBody(response);
@@ -78,7 +78,7 @@ public class {{domainTitleCase}}Routes extends RouteBuilder {
                 .validate().simple("${header.{{domain}}Id} != null")
                 .process(exchange -> {
                     String {{domain}}Id = exchange.getIn().getHeader("{{domain}}Id", String.class);
-                    boolean deleted = {{domain}}Service.delete{{domainTitleCase}}({{domain}}Id);
+                    boolean deleted = {{domain}}Service.delete({{domain}}Id);
 
                     if (!deleted) {
                         throw new RuntimeException("{{domainTitleCase}} not found with ID: " + {{domain}}Id);
@@ -104,7 +104,7 @@ public class {{domainTitleCase}}Routes extends RouteBuilder {
         from("timer://{{domain}}-health?period=60000") // Every minute
                 .routeId("{{domain}}-health-route")
                 .process(exchange -> {
-                    long count = {{domain}}Service.getAll{{domainTitleCase}}s(org.springframework.data.domain.Pageable.unpaged()).getTotalElements();
+                    long count = {{domain}}Service.findAll(org.springframework.data.domain.Pageable.unpaged()).getTotalElements();
                     exchange.getIn().setBody("{\"service\":\"{{domain}}-service\",\"status\":\"healthy\",\"{{domain}}Count\":" + count + "}");
                     exchange.getIn().setHeader("Content-Type", "application/json");
                 })

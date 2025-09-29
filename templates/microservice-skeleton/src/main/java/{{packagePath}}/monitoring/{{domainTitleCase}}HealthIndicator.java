@@ -1,7 +1,10 @@
 package {{packageName}}.monitoring;
 
+import {{packageName}}.dto.{{domainTitleCase}}Response;
 import {{packageName}}.service.{{domainTitleCase}}Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -29,7 +32,8 @@ public class {{domainTitleCase}}HealthIndicator {
             long startTime = System.currentTimeMillis();
 
             // Basic connectivity test
-            long totalCount = {{domain}}Service.getAll{{domainTitleCase}}s().size();
+            Page<{{domainTitleCase}}Response> totalPage = {{domain}}Service.findAll(Pageable.unpaged());
+            long totalCount = totalPage.getTotalElements();
 
             long responseTime = System.currentTimeMillis() - startTime;
 

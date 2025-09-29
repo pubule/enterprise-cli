@@ -4,8 +4,11 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import {{packageName}}.dto.{{domainTitleCase}}Response;
 import {{packageName}}.service.{{domainTitleCase}}Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
@@ -210,7 +213,8 @@ public class {{domainTitleCase}}MetricsService {
     private void updateCounts() {
         try {
             // Update total count
-            long total = {{domain}}Service.getAll{{domainTitleCase}}s().size();
+            Page<{{domainTitleCase}}Response> totalPage = {{domain}}Service.findAll(Pageable.unpaged());
+            long total = totalPage.getTotalElements();
             total{{domainTitleCase}}Count.set(total);
 
             // Update active count ({{domain}}s with descriptions - example business rule)

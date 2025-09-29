@@ -1,7 +1,7 @@
 package {{packageName}}.enterprise.base;
 
 import {{packageName}}.enterprise.patterns.EnterpriseEventPublisher;
-import {{packageName}}.enterprise.patterns.EnterpriseMetricsCollector;
+import {{packageName}}.enterprise.patterns.MetricsCollector;
 import {{packageName}}.enterprise.patterns.EnterpriseAuditLogger;
 import {{packageName}}.enterprise.validation.BusinessValidator;
 import {{packageName}}.enterprise.rules.BusinessRules;
@@ -47,7 +47,7 @@ public abstract class AbstractEnterpriseService<T, ID, CreateDTO, UpdateDTO, Res
     private EnterpriseEventPublisher eventPublisher;
 
     @Autowired
-    private EnterpriseMetricsCollector metricsCollector;
+    private MetricsCollector metricsCollector;
 
     @Autowired
     private EnterpriseAuditLogger auditLogger;

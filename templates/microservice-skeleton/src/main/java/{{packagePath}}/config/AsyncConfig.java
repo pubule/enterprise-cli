@@ -27,7 +27,7 @@ public class AsyncConfig implements AsyncConfigurer {
      * Main async executor for domain event processing
      */
     @Override
-    @Bean(name = "taskExecutor")
+    @Bean(name = "asyncTaskExecutor")
     public Executor getAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 
