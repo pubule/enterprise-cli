@@ -4,10 +4,15 @@ const { Command } = require('commander');
 const chalk = require('chalk');
 const figlet = require('figlet');
 
+// Import configuration
+const { FRAMEWORK_VERSION } = require('../src/config');
+
 // Import commands
 const { generateCommand } = require('../src/commands/generate');
 const frontendCommand = require('../src/commands/frontend');
 const devCommand = require('../src/commands/dev');
+const { initCommand } = require('../src/commands/init');
+const { statusCommand } = require('../src/commands/status');
 
 const program = new Command();
 
@@ -35,13 +40,17 @@ program
   .description('CLI tool for generating enterprise applications')
   .version('1.0.0', '-v, --version', 'Display version number');
 
-// Commands will be added here
+// Init command
 program
   .command('init')
-  .description('Initialize a new enterprise project')
-  .action(() => {
-    console.log(chalk.yellow('⚠️  Command not yet implemented'));
-  });
+  .description('Initialize Enterprise CLI workspace')
+  .action(initCommand);
+
+// Status command
+program
+  .command('status')
+  .description('Show Enterprise CLI workspace status')
+  .action(statusCommand);
 
 program
   .command('generate')
@@ -52,7 +61,7 @@ program
   .option('-p, --package <package>', 'Java package name (e.g., com.company.domain)')
   .option('-e, --entities <entities>', 'Comma-separated entity names (PascalCase)')
   .option('--database <db>', 'Database type (postgresql, mysql, h2)', 'postgresql')
-  .option('--framework-version <version>', 'Enterprise Framework version', '1.0.0')
+  .option('--framework-version <version>', 'Enterprise Framework version', FRAMEWORK_VERSION)
   .option('--auth', 'Include OAuth2 authentication', true)
   .option('--no-auth', 'Exclude OAuth2 authentication')
   .option('--camel', 'Include Apache Camel integration', true)

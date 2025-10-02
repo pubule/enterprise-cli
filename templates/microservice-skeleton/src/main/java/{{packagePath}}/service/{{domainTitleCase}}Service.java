@@ -6,10 +6,13 @@ package {{packageName}}.service;
 
 import {{packageName}}.entity.{{domainTitleCase}};
 import {{packageName}}.repository.{{domainTitleCase}}Repository;
+import {{packageName}}.business.{{domainTitleCase}}BusinessRules;
 import {{packageName}}.enterprise.framework.annotation.EnterpriseService;
 import {{packageName}}.enterprise.framework.core.service.AbstractEnterpriseService;
 import {{packageName}}.enterprise.framework.exception.BusinessException;
 import {{packageName}}.enterprise.framework.validation.BusinessValidator;
+import {{packageName}}.enterprise.framework.validation.RuleContext;
+import {{packageName}}.enterprise.framework.validation.RuleResult;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
@@ -49,13 +52,16 @@ import java.util.List;
 public class {{domainTitleCase}}Service extends AbstractEnterpriseService<{{domainTitleCase}}, Long> {
 
     private final {{domainTitleCase}}Repository {{domain}}Repository;
+    private final {{domainTitleCase}}BusinessRules businessRules;
 
     public {{domainTitleCase}}Service(
             {{domainTitleCase}}Repository {{domain}}Repository,
             BusinessValidator<{{domainTitleCase}}> validator,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            {{domainTitleCase}}BusinessRules businessRules) {
         super({{domain}}Repository, validator, eventPublisher);
         this.{{domain}}Repository = {{domain}}Repository;
+        this.businessRules = businessRules;
     }
 
     // ═══════════════════════════════════════════════════════
@@ -96,6 +102,47 @@ public class {{domainTitleCase}}Service extends AbstractEnterpriseService<{{doma
     @Override
     protected String getEntityName() {
         return "{{domainTitleCase}}";
+    }
+
+    /**
+     * Executes business rules for the entity.
+     * Called by framework after validation passes, before save.
+     *
+     * <p><strong>Rule Execution Flow:</strong>
+     * <ol>
+     *   <li>Basic validation (field-level) via BusinessValidator</li>
+     *   <li>Business rules (complex logic) via BusinessRules - YOU ARE HERE</li>
+     *   <li>Save to database</li>
+     *   <li>Publish events</li>
+     * </ol>
+     *
+     * @param entity  the entity to validate
+     * @param context the rule context (operation type, existing entity)
+     * @throws BusinessException if business rules fail with ERROR or CRITICAL severity
+     */
+    @Override
+    protected void executeBusinessRules({{domainTitleCase}} entity, RuleContext context) {
+        log.debug("Executing business rules for {{domain}}: {}", entity.getId());
+
+        RuleResult result = businessRules.evaluate(entity, context);
+
+        if (!result.isPassed()) {
+            log.warn("Business rule failed: {} - {}", result.getRuleName(), result.getMessage());
+
+            // For CRITICAL and ERROR severity, throw exception to block operation
+            if (result.getSeverity() == RuleResult.RuleSeverity.CRITICAL ||
+                result.getSeverity() == RuleResult.RuleSeverity.ERROR) {
+                throw new BusinessException("BUSINESS_RULE_VIOLATION")
+                        .withMessage(result.getMessage())
+                        .withDetail("ruleName", result.getRuleName())
+                        .withDetail("severity", result.getSeverity().toString());
+            }
+
+            // For WARNING and INFO, log but allow operation to continue
+            if (result.getSeverity() == RuleResult.RuleSeverity.WARNING) {
+                log.warn("Business rule warning: {}", result.getMessage());
+            }
+        }
     }
 
     // ═══════════════════════════════════════════════════════

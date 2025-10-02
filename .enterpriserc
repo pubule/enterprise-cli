@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "initialized": "2025-10-02T21:10:16.933Z",
+  "workspace": {
+    "root": "C:\\Users\\pubul\\WebstormProjects\\enterprise-cli",
+    "customTemplates": "templates/custom"
+  },
+  "defaults": {
+    "database": "postgresql",
+    "framework": {
+      "auth": true,
+      "camel": true,
+      "flyway": true,
+      "openApi": true
+    },
+    "deployment": {
+      "docker": true,
+      "kubernetes": true
+    }
+  }
+}
