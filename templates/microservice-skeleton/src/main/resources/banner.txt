@@ -1,0 +1,11 @@
+
+  ___          _                   _
+ | __|_ _  ___| |_ ___ _ _ _ __ _ _(_)___ ___
+ | _|| ' \/ -_)  _/ -_) '_| '_ \ '_| (_-</ -_)
+ |___|_||_\___|\__\___|_| | .__/_| |_/__/\___|
+                          |_|
+
+ :: {{domainTitleCase}} Microservice ::  (v1.0.0)
+ :: Enterprise Framework :: (v{{frameworkVersion}})
+ :: Spring Boot :: (v3.2.0)
+

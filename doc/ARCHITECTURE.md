@@ -309,13 +309,23 @@ const { generateFromTemplate } = require('../utils/file-generator');
 
 const templateVars = {
   serviceName: 'user-service',
+  domain: 'user',
+  domainTitleCase: 'User',
   packageName: 'com.company.user',
-  entities: [
-    { name: 'User', tableName: 'users' },
-    { name: 'Role', tableName: 'roles' }
-  ],
+  packagePath: 'com/company/user',
+  database: 'postgresql',
+  postgresql: true,
+  mysql: false,
+  h2: false,
   hasAuth: true,
-  hasDocker: true
+  hasCamel: false,
+  hasFlyway: true,
+  hasOpenApi: true,
+  hasDocker: true,
+  hasK8s: true,
+  frameworkVersion: '2.0.0',
+  year: 2025,
+  cliVersion: '1.0.0'
 };
 
 await generateFromTemplate(
@@ -336,18 +346,48 @@ Templates use [Mustache](https://mustache.github.io/) for variable interpolation
 ```
 templates/microservice-skeleton/
 ├── src/main/java/{{packagePath}}/
-│   ├── {{domainTitleCase}}ServiceApplication.java
+│   ├── {{domainTitleCase}}Application.java
+│   ├── enterprise/framework/             # 36 framework files (pre-built)
 │   ├── entity/
-│   │   └── {{#entities}}
-│   │       {{name}}.java
-│   │       {{/entities}}
+│   │   └── {{domainTitleCase}}.java
+│   ├── dto/
+│   │   ├── {{domainTitleCase}}Request.java
+│   │   └── {{domainTitleCase}}Response.java
+│   ├── mapper/
+│   │   └── {{domainTitleCase}}Mapper.java
 │   ├── repository/
-│   │   └── {{#entities}}
-│   │       {{name}}Repository.java
-│   │       {{/entities}}
-│   └── ...
+│   │   └── {{domainTitleCase}}Repository.java
+│   ├── service/
+│   │   └── {{domainTitleCase}}Service.java
+│   ├── controller/
+│   │   └── {{domainTitleCase}}Controller.java
+│   ├── validation/
+│   │   └── {{domainTitleCase}}Validator.java
+│   └── business/
+│       └── {{domainTitleCase}}BusinessRules.java
+├── src/main/resources/
+│   ├── application.yml
+│   ├── application-dev.yml
+│   ├── application-prod.yml
+│   ├── banner.txt
+│   └── db/migration/
+│       └── V1__Create_{{domain}}_table.sql
+├── src/test/java/{{packagePath}}/
+│   ├── service/
+│   │   └── {{domainTitleCase}}ServiceTest.java
+│   └── controller/
+│       └── {{domainTitleCase}}ControllerTest.java
+├── Dockerfile
+├── docker-compose.yml
+├── .dockerignore
+├── k8s/
+│   ├── deployment.yml
+│   ├── service.yml
+│   ├── configmap.yml
+│   └── secret.yml.example
 ├── pom.xml
-└── docker-compose.yml
+├── .gitignore
+└── README.md
 ```
 
 ### Mustache Syntax
@@ -370,13 +410,29 @@ templates/microservice-skeleton/
 {{/hasAuth}}
 ```
 
-**Lists:**
+**Lists (example with array):**
 ```mustache
-{{#entities}}
-public class {{name}} {
-    // Entity for {{tableName}}
-}
-{{/entities}}
+{{#features}}
+- Feature: {{name}}
+  Status: {{status}}
+{{/features}}
+```
+
+**Conditionals with database type:**
+```mustache
+{{#postgresql}}
+<dependency>
+    <groupId>org.postgresql</groupId>
+    <artifactId>postgresql</artifactId>
+</dependency>
+{{/postgresql}}
+
+{{#mysql}}
+<dependency>
+    <groupId>com.mysql</groupId>
+    <artifactId>mysql-connector-j</artifactId>
+</dependency>
+{{/mysql}}
 ```
 
 **Filename Variables:**
@@ -392,38 +448,62 @@ When calling `generateFromTemplate`, provide these variables:
 **Backend Template (microservice-skeleton):**
 ```javascript
 {
+  // Service Identity
+  serviceName: 'user-service',        // Kebab-case service name
+  domain: 'user',                     // Lowercase domain name
+  domainTitleCase: 'User',            // PascalCase domain name
+
+  // Package Configuration
+  packageName: 'com.company.user',    // Java package name
+  packagePath: 'com/company/user',    // Filesystem path
+
+  // Database Configuration
+  database: 'postgresql',             // Database type: postgresql, mysql, h2
+
+  // Database-specific flags (mutually exclusive)
+  postgresql: true,                   // If database === 'postgresql'
+  mysql: false,                       // If database === 'mysql'
+  h2: false,                          // If database === 'h2'
+
+  // Feature Flags
+  hasAuth: true,                      // Include Spring Security + OAuth2
+  hasCamel: false,                    // Include Apache Camel
+  hasFlyway: true,                    // Include Flyway migrations
+  hasOpenApi: true,                   // Include SpringDoc OpenAPI/Swagger
+  hasDocker: true,                    // Generate Dockerfile + docker-compose
+  hasK8s: true,                       // Generate Kubernetes manifests
+
+  // Framework Configuration
+  frameworkVersion: '2.0.0',          // Enterprise Framework version
+  year: 2025,                         // Copyright year
+  cliVersion: '1.0.0'                 // Enterprise CLI version
+}
+```
+
+**Example for `user-service` with PostgreSQL:**
+```javascript
+const templateVars = {
   serviceName: 'user-service',
   domain: 'user',
   domainTitleCase: 'User',
   packageName: 'com.company.user',
   packagePath: 'com/company/user',
-  frameworkPackage: 'com.company.user.enterprise.framework',
-  frameworkPackagePath: 'com/company/user/enterprise/framework',
-
-  entities: [
-    {
-      name: 'User',              // PascalCase
-      nameCamelCase: 'user',
-      tableName: 'users'
-    }
-  ],
-
   database: 'postgresql',
-  databaseDriverClass: 'org.postgresql.Driver',
-  databaseUrl: 'jdbc:postgresql://localhost:5432/user_service',
-  databaseDialect: 'org.hibernate.dialect.PostgreSQLDialect',
-
-  // Feature flags
-  hasCoreFramework: true,
+  postgresql: true,
+  mysql: false,
+  h2: false,
   hasAuth: true,
-  hasCamel: true,
+  hasCamel: false,
+  hasFlyway: true,
+  hasOpenApi: true,
   hasDocker: true,
-  hasKubernetes: true,
-  // ... more flags
+  hasK8s: true,
+  frameworkVersion: '2.0.0',
+  year: 2025,
+  cliVersion: '1.0.0'
+};
 
-  frameworkVersion: '1.0.0',
-  year: 2025
-}
+await generateFromTemplate('microservice-skeleton', './user-service', templateVars);
 ```
 
 **Frontend Template (react-skeleton):**

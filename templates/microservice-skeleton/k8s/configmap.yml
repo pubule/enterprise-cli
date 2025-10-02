@@ -1,0 +1,50 @@
+# ═══════════════════════════════════════════════════════════════
+# Kubernetes ConfigMap for {{domainTitleCase}} Microservice
+# Enterprise Framework v{{frameworkVersion}}
+#
+# Non-sensitive configuration data
+# ═══════════════════════════════════════════════════════════════
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{serviceName}}-config
+  labels:
+    app: {{serviceName}}
+data:
+  # Application Configuration
+  application.name: "{{serviceName}}"
+  spring.profiles.active: "prod"
+
+  {{#postgresql}}
+  # Database Configuration (PostgreSQL)
+  database.host: "postgres-service"
+  database.port: "5432"
+  database.name: "{{domain}}_db"
+  {{/postgresql}}
+
+  {{#mysql}}
+  # Database Configuration (MySQL)
+  database.host: "mysql-service"
+  database.port: "3306"
+  database.name: "{{domain}}_db"
+  {{/mysql}}
+
+  # Enterprise Framework Configuration
+  enterprise.framework.enabled: "true"
+  enterprise.framework.jpa.auditing-enabled: "true"
+  enterprise.framework.events.async-enabled: "true"
+  enterprise.framework.pagination.default-page-size: "20"
+  enterprise.framework.pagination.max-page-size: "100"
+
+  # Logging Configuration
+  logging.level.root: "INFO"
+  logging.level.{{packageName}}: "INFO"
+  logging.level.enterprise.framework: "WARN"
+
+  # Actuator Configuration
+  management.endpoints.web.exposure.include: "health,info,metrics,prometheus"
+  management.endpoint.health.show-details: "when-authorized"
+
+  # JVM Options
+  java.opts: "-Xms512m -Xmx1024m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"

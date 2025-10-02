@@ -81,7 +81,6 @@ ent generate user-service
 # Follow the interactive prompts, or use CLI options:
 ent generate user-service \
   --domain user \
-  --entities User,Role,Permission \
   --database postgresql
 
 # Setup and start development
@@ -90,6 +89,7 @@ ent dev setup
 ent dev start --backend
 
 # Backend is now running at http://localhost:8080
+# API docs at http://localhost:8080/swagger-ui.html
 ```
 
 ### Quick Frontend Example
@@ -175,55 +175,117 @@ ent dev start --frontend
 ```
 user-service/
 ├── src/main/java/com/company/user/
-│   ├── enterprise/framework/          # Enterprise Framework v2.0
+│   ├── enterprise/framework/          # Enterprise Framework v2.0 (36 files)
+│   │   ├── annotation/                # Meta-annotations (NEW v2.0)
+│   │   │   ├── EnterpriseEntity.java
+│   │   │   ├── EnterpriseService.java
+│   │   │   ├── EnterpriseController.java
+│   │   │   ├── BusinessRule.java
+│   │   │   └── BusinessValidation.java
+│   │   ├── config/                    # Auto-configuration (NEW v2.0)
+│   │   │   ├── EnterpriseFrameworkAutoConfiguration.java
+│   │   │   └── FrameworkProperties.java
 │   │   ├── core/
 │   │   │   ├── entity/
-│   │   │   │   └── AbstractAuditableEntity.java
+│   │   │   │   ├── AbstractAuditableEntity.java
+│   │   │   │   ├── SoftDeletable.java
+│   │   │   │   └── TenantAware.java
 │   │   │   ├── repository/
-│   │   │   │   └── AbstractEnterpriseRepository.java
+│   │   │   │   ├── AbstractEnterpriseRepository.java
+│   │   │   │   └── SpecificationBuilder.java
 │   │   │   ├── service/
-│   │   │   │   └── AbstractEnterpriseService.java
+│   │   │   │   ├── AbstractEnterpriseService.java
+│   │   │   │   └── CrudService.java
 │   │   │   └── controller/
 │   │   │       └── AbstractEnterpriseController.java
-│   │   ├── dto/                       # Response wrappers
+│   │   ├── dto/                       # Response wrappers (v2.0)
 │   │   │   ├── ApiResponse.java
 │   │   │   ├── PagedResponse.java
 │   │   │   ├── ErrorDetails.java
 │   │   │   └── EntityMapper.java
-│   │   ├── validation/                # Validation framework
+│   │   ├── validation/                # Validation framework (v2.0)
 │   │   │   ├── ValidationResult.java
+│   │   │   ├── ValidationContext.java
+│   │   │   ├── RuleContext.java
+│   │   │   ├── RuleResult.java
 │   │   │   ├── BusinessRule.java
-│   │   │   └── BusinessValidator.java
-│   │   ├── event/                     # Event system
+│   │   │   ├── BusinessValidator.java
+│   │   │   └── DefaultValidator.java
+│   │   ├── event/                     # Event system (v2.0)
 │   │   │   ├── DomainEvent.java
 │   │   │   ├── AbstractDomainEvent.java
-│   │   │   └── EventPublisher.java
-│   │   └── exception/                 # Exception handling
-│   │       ├── BusinessException.java
-│   │       ├── ValidationException.java
-│   │       └── GlobalExceptionHandler.java
-│   ├── entity/                        # Your entities
-│   │   └── User.java
+│   │   │   ├── EventPublisher.java
+│   │   │   ├── SpringEventPublisher.java
+│   │   │   ├── EntityCreatedEvent.java
+│   │   │   ├── EntityUpdatedEvent.java
+│   │   │   ├── EntityDeletedEvent.java
+│   │   │   └── EntitySoftDeletedEvent.java
+│   │   ├── exception/                 # Exception handling (v2.0)
+│   │   │   ├── BusinessException.java
+│   │   │   ├── ValidationException.java
+│   │   │   ├── ResourceNotFoundException.java
+│   │   │   ├── ErrorDetails.java
+│   │   │   └── GlobalExceptionHandler.java
+│   │   ├── EnterpriseFramework.java   # Utility facade (NEW v2.0)
+│   │   └── FRAMEWORK_README.md        # Inline docs (NEW v2.0)
+│   │
+│   ├── entity/                        # Your business entities
+│   │   └── User.java                  # Extends AbstractAuditableEntity + SoftDeletable
 │   ├── dto/                           # Your DTOs
-│   │   ├── UserRequest.java
-│   │   ├── UserResponse.java
-│   │   └── UserMapper.java
+│   │   ├── UserRequest.java           # Request DTO with validation
+│   │   └── UserResponse.java          # Response DTO with all fields
+│   ├── mapper/                        # Entity/DTO mapping
+│   │   └── UserMapper.java            # Implements EntityMapper
 │   ├── repository/                    # Your repositories
-│   │   └── UserRepository.java
-│   ├── service/                       # Your services
-│   │   └── UserService.java
-│   ├── controller/                    # Your REST controllers
-│   │   └── UserController.java
-│   └── UserServiceApplication.java
+│   │   └── UserRepository.java        # Extends AbstractEnterpriseRepository
+│   ├── service/                       # Your business logic
+│   │   └── UserService.java           # @EnterpriseService + custom methods
+│   ├── controller/                    # Your REST endpoints
+│   │   └── UserController.java        # @EnterpriseController + custom endpoints
+│   ├── validation/                    # Business validation
+│   │   └── UserValidator.java         # Implements BusinessValidator
+│   ├── business/                      # Business rules
+│   │   └── UserBusinessRules.java     # @BusinessRule with priority
+│   └── UserServiceApplication.java    # Main Spring Boot app
+│
 ├── src/main/resources/
-│   ├── application.yml
-│   └── db/migration/                  # Flyway migrations
-├── src/test/java/                     # Tests
-├── docker-compose.yml                 # Docker setup
-├── Dockerfile                         # Container image
+│   ├── application.yml                # Base configuration
+│   ├── application-dev.yml            # Development profile
+│   ├── application-prod.yml           # Production profile
+│   ├── banner.txt                     # Startup ASCII banner
+│   └── db/migration/                  # Flyway database migrations
+│       └── V1__Create_user_table.sql
+│
+├── src/test/java/                     # Comprehensive tests
+│   └── com/company/user/
+│       ├── service/
+│       │   └── UserServiceTest.java   # 15 test methods (Mockito)
+│       └── controller/
+│           └── UserControllerTest.java # 12 test methods (MockMvc)
+│
+├── Dockerfile                         # Multi-stage container build
+├── docker-compose.yml                 # App + database setup
+├── .dockerignore                      # Docker ignore patterns
+│
 ├── k8s/                               # Kubernetes manifests
-└── pom.xml                            # Maven configuration
+│   ├── deployment.yml                 # 3 replicas + probes + resources
+│   ├── service.yml                    # ClusterIP service
+│   ├── configmap.yml                  # Configuration data
+│   └── secret.yml.example             # Secret template
+│
+├── pom.xml                            # Maven configuration
+├── .gitignore                         # Git ignore patterns
+└── README.md                          # Project documentation
 ```
+
+**Generated Files Summary:**
+- **Framework**: 36 files (pre-built, production-ready)
+- **Business Layer**: 9 files (Entity, Repository, Service, Controller, DTOs, Mapper, Validator, BusinessRules)
+- **Configuration**: 5 files (application.yml profiles, Flyway migration, banner)
+- **Tests**: 2 files (27 test methods total)
+- **Docker**: 3 files (Dockerfile, docker-compose, .dockerignore)
+- **Kubernetes**: 4 files (deployment, service, configmap, secret)
+- **Total**: **62 files** (~3,800 LOC business code + ~850 LOC config)
 
 ### Frontend (React Application)
 
