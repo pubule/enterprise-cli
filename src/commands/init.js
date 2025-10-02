@@ -7,6 +7,14 @@ const path = require('path');
 const chalk = require('chalk');
 const ora = require('ora');
 const { FRAMEWORK_VERSION, PATHS } = require('../config');
+const {
+  DATABASES,
+  FILES,
+  UI_FRAMEWORKS,
+  SYMBOLS,
+  EXIT_CODES,
+  MESSAGES
+} = require('../constants');
 
 /**
  * Initialize Enterprise CLI workspace
@@ -34,7 +42,7 @@ async function initCommand() {
         customTemplates: PATHS.customTemplates
       },
       defaults: {
-        database: 'postgresql',
+        database: DATABASES.POSTGRESQL,
         framework: {
           auth: true,
           camel: true,
@@ -48,11 +56,11 @@ async function initCommand() {
       }
     };
 
-    const configPath = path.join(cwd, '.enterpriserc');
+    const configPath = path.join(cwd, FILES.ENTERPRISERC);
     await fs.writeJson(configPath, config, { spaces: 2 });
 
     // Create README in workspace directory
-    const readmePath = path.join(workspaceDir, 'README.md');
+    const readmePath = path.join(workspaceDir, FILES.README);
     const readmeContent = `# Enterprise CLI Workspace
 
 This directory is used by Enterprise CLI for managing your projects.
@@ -76,7 +84,7 @@ ent generate my-service --domain user --package com.company.user
 
 Generate a React app:
 \`\`\`bash
-ent frontend create my-app --template material-ui
+ent frontend create my-app --template ${UI_FRAMEWORKS.MATERIAL_UI}
 \`\`\`
 
 Check status:
@@ -95,24 +103,24 @@ For full documentation, visit the Enterprise CLI docs.
 
     // Success message
     console.log();
-    console.log(chalk.green('✅ Enterprise CLI workspace initialized!'));
-    console.log(chalk.cyan('Ready to generate microservices with Enterprise Framework foundation.'));
+    console.log(chalk.green(`${SYMBOLS.SUCCESS} ${MESSAGES.SUCCESS.WORKSPACE_INITIALIZED}`));
+    console.log(chalk.cyan(MESSAGES.SUCCESS.READY_TO_GENERATE));
     console.log();
-    console.log(chalk.gray('Created:'));
+    console.log(chalk.gray(`${MESSAGES.INFO.CREATED}:`));
     console.log(chalk.gray(`  • ${PATHS.workspace}/`));
     console.log(chalk.gray(`  • ${PATHS.customTemplates}/`));
-    console.log(chalk.gray(`  • .enterpriserc`));
+    console.log(chalk.gray(`  • ${FILES.ENTERPRISERC}`));
     console.log();
-    console.log(chalk.white('Next steps:'));
+    console.log(chalk.white(`${MESSAGES.INFO.NEXT_STEPS}:`));
     console.log(chalk.white(`  ${chalk.cyan('ent generate')} <service-name>  - Generate a microservice`));
     console.log(chalk.white(`  ${chalk.cyan('ent frontend create')} <app-name> - Create a React app`));
     console.log(chalk.white(`  ${chalk.cyan('ent status')}                    - Check workspace status`));
     console.log();
 
   } catch (error) {
-    spinner.fail('Failed to initialize workspace');
+    spinner.fail(MESSAGES.ERROR.WORKSPACE_INIT_FAILED);
     console.error(chalk.red(`Error: ${error.message}`));
-    process.exit(1);
+    process.exit(EXIT_CODES.ERROR);
   }
 }
 

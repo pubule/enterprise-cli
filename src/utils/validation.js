@@ -3,6 +3,8 @@
  * Provides validation and string transformation functions for enterprise code generation
  */
 
+const { LIMITS } = require('../constants');
+
 // Java reserved keywords for validation
 const JAVA_KEYWORDS = new Set([
   'abstract', 'assert', 'boolean', 'break', 'byte', 'case', 'catch', 'char',
@@ -29,7 +31,7 @@ function isValidServiceName(name) {
   }
 
   // Check length
-  if (name.length < 2 || name.length > 50) {
+  if (name.length < LIMITS.SERVICE_NAME_MIN || name.length > LIMITS.SERVICE_NAME_MAX) {
     return false;
   }
 

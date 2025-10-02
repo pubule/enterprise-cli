@@ -6,6 +6,13 @@ const figlet = require('figlet');
 
 // Import configuration
 const { FRAMEWORK_VERSION } = require('../src/config');
+const {
+  BOX,
+  SEPARATOR_LENGTHS,
+  DATABASES,
+  UI_FRAMEWORKS,
+  PROFILES
+} = require('../src/constants');
 
 // Import commands
 const { generateCommand } = require('../src/commands/generate');
@@ -29,9 +36,9 @@ console.log(
   )
 );
 
-console.log(chalk.gray('─'.repeat(80)));
+console.log(chalk.gray(BOX.HORIZONTAL.repeat(SEPARATOR_LENGTHS.LONG)));
 console.log(chalk.white('Enterprise-grade CLI for generating full-stack applications'));
-console.log(chalk.gray('─'.repeat(80)));
+console.log(chalk.gray(BOX.HORIZONTAL.repeat(SEPARATOR_LENGTHS.LONG)));
 console.log();
 
 // Setup Commander
@@ -60,7 +67,7 @@ program
   .option('-d, --domain <domain>', 'Business domain (e.g., user, order, product)')
   .option('-p, --package <package>', 'Java package name (e.g., com.company.domain)')
   .option('-e, --entities <entities>', 'Comma-separated entity names (PascalCase)')
-  .option('--database <db>', 'Database type (postgresql, mysql, h2)', 'postgresql')
+  .option('--database <db>', 'Database type (postgresql, mysql, h2)', DATABASES.POSTGRESQL)
   .option('--framework-version <version>', 'Enterprise Framework version', FRAMEWORK_VERSION)
   .option('--auth', 'Include OAuth2 authentication', true)
   .option('--no-auth', 'Exclude OAuth2 authentication')
@@ -82,7 +89,7 @@ frontend
   .command('create')
   .description('Create a new React application')
   .argument('[app-name]', 'Name of the React application (kebab-case)')
-  .option('-t, --template <template>', 'UI framework template (material-ui, ant-design, chakra-ui, none)', 'material-ui')
+  .option('-t, --template <template>', 'UI framework template (material-ui, ant-design, chakra-ui, none)', UI_FRAMEWORKS.MATERIAL_UI)
   .option('--typescript', 'Use TypeScript', true)
   .option('--no-typescript', 'Use JavaScript instead of TypeScript')
   .option('--redux', 'Include Redux Toolkit', true)
@@ -123,7 +130,7 @@ dev
   .option('--backend', 'Start backend server only')
   .option('--frontend', 'Start frontend server only')
   .option('--full-stack', 'Start both backend and frontend servers')
-  .option('--profile <profile>', 'Spring Boot profile to use', 'dev')
+  .option('--profile <profile>', 'Spring Boot profile to use', PROFILES.DEV)
   .action(devCommand.start);
 
 dev

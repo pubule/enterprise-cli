@@ -7,6 +7,13 @@ const path = require('path');
 const chalk = require('chalk');
 const { execSync } = require('child_process');
 const { CLI_VERSION, FRAMEWORK_VERSION, CLI_NAME } = require('../config');
+const {
+  SYMBOLS,
+  BOX,
+  SEPARATOR_LENGTHS,
+  FILES,
+  MESSAGES
+} = require('../constants');
 
 /**
  * Check if a command is available in PATH
@@ -40,78 +47,78 @@ function getVersion(command, args = '--version') {
  */
 async function statusCommand() {
   const cwd = process.cwd();
-  const configPath = path.join(cwd, '.enterpriserc');
+  const configPath = path.join(cwd, FILES.ENTERPRISERC);
 
   console.log();
-  console.log(chalk.cyan.bold(`╔═══════════════════════════════════════════════════════════════╗`));
-  console.log(chalk.cyan.bold(`║  ${CLI_NAME.padEnd(57)}║`));
-  console.log(chalk.cyan.bold(`╚═══════════════════════════════════════════════════════════════╝`));
+  console.log(chalk.cyan.bold(`${BOX.DOUBLE_TOP_LEFT}${BOX.DOUBLE_HORIZONTAL.repeat(63)}${BOX.DOUBLE_TOP_RIGHT}`));
+  console.log(chalk.cyan.bold(`${BOX.DOUBLE_VERTICAL}  ${CLI_NAME.padEnd(57)}${BOX.DOUBLE_VERTICAL}`));
+  console.log(chalk.cyan.bold(`${BOX.DOUBLE_BOTTOM_LEFT}${BOX.DOUBLE_HORIZONTAL.repeat(63)}${BOX.DOUBLE_BOTTOM_RIGHT}`));
   console.log();
 
   // CLI Information
-  console.log(chalk.white.bold('📦 CLI Information'));
-  console.log(chalk.gray('─'.repeat(65)));
+  console.log(chalk.white.bold(`${SYMBOLS.PACKAGE} ${MESSAGES.HEADERS.CLI_INFORMATION}`));
+  console.log(chalk.gray(BOX.HORIZONTAL.repeat(SEPARATOR_LENGTHS.MEDIUM)));
   console.log(`  ${chalk.cyan('CLI Version:')}         ${chalk.white(CLI_VERSION)}`);
   console.log(`  ${chalk.cyan('Framework Version:')}   ${chalk.white(`v${FRAMEWORK_VERSION}`)}`);
   console.log();
 
   // Workspace Status
-  console.log(chalk.white.bold('🏗️  Workspace Status'));
-  console.log(chalk.gray('─'.repeat(65)));
+  console.log(chalk.white.bold(`${SYMBOLS.BUILDING} ${MESSAGES.HEADERS.WORKSPACE_STATUS}`));
+  console.log(chalk.gray(BOX.HORIZONTAL.repeat(SEPARATOR_LENGTHS.MEDIUM)));
 
   if (await fs.pathExists(configPath)) {
     const config = await fs.readJson(configPath);
-    console.log(`  ${chalk.green('✓')} Initialized`);
+    console.log(`  ${chalk.green(SYMBOLS.CHECKMARK)} Initialized`);
     console.log(`  ${chalk.cyan('Root:')}              ${chalk.white(config.workspace.root)}`);
     console.log(`  ${chalk.cyan('Initialized:')}       ${chalk.white(new Date(config.initialized).toLocaleString())}`);
     console.log(`  ${chalk.cyan('Config Version:')}    ${chalk.white(config.version)}`);
   } else {
-    console.log(`  ${chalk.yellow('⚠')} Not initialized`);
+    console.log(`  ${chalk.yellow(SYMBOLS.WARNING)} Not initialized`);
     console.log(`  ${chalk.gray('Run')} ${chalk.cyan('ent init')} ${chalk.gray('to initialize workspace')}`);
   }
   console.log();
 
   // Environment Check
-  console.log(chalk.white.bold('🔧 Environment'));
-  console.log(chalk.gray('─'.repeat(65)));
+  console.log(chalk.white.bold(`${SYMBOLS.TOOLS} ${MESSAGES.HEADERS.ENVIRONMENT}`));
+  console.log(chalk.gray(BOX.HORIZONTAL.repeat(SEPARATOR_LENGTHS.MEDIUM)));
 
   // Java
   const javaInstalled = checkCommand('java');
-  const javaIcon = javaInstalled ? chalk.green('✓') : chalk.red('✗');
+  const javaIcon = javaInstalled ? chalk.green(SYMBOLS.CHECKMARK) : chalk.red(SYMBOLS.CROSS);
   const javaVersion = javaInstalled ? getVersion('java', '-version 2>&1') : 'Not installed';
   console.log(`  ${javaIcon} ${chalk.cyan('Java:')}             ${chalk.white(javaVersion)}`);
 
   // Maven
   const mavenInstalled = checkCommand('mvn');
-  const mavenIcon = mavenInstalled ? chalk.green('✓') : chalk.red('✗');
+  const mavenIcon = mavenInstalled ? chalk.green(SYMBOLS.CHECKMARK) : chalk.red(SYMBOLS.CROSS);
   const mavenVersion = mavenInstalled ? getVersion('mvn') : 'Not installed';
   console.log(`  ${mavenIcon} ${chalk.cyan('Maven:')}            ${chalk.white(mavenVersion)}`);
 
   // Node.js
   const nodeVersion = getVersion('node');
-  console.log(`  ${chalk.green('✓')} ${chalk.cyan('Node.js:')}          ${chalk.white(nodeVersion)}`);
+  console.log(`  ${chalk.green(SYMBOLS.CHECKMARK)} ${chalk.cyan('Node.js:')}          ${chalk.white(nodeVersion)}`);
 
   // NPM
   const npmVersion = getVersion('npm');
-  console.log(`  ${chalk.green('✓')} ${chalk.cyan('NPM:')}              ${chalk.white(npmVersion)}`);
+  console.log(`  ${chalk.green(SYMBOLS.CHECKMARK)} ${chalk.cyan('NPM:')}              ${chalk.white(npmVersion)}`);
 
   // Docker
   const dockerInstalled = checkCommand('docker');
-  const dockerIcon = dockerInstalled ? chalk.green('✓') : chalk.yellow('⚠');
+  const dockerIcon = dockerInstalled ? chalk.green(SYMBOLS.CHECKMARK) : chalk.yellow(SYMBOLS.WARNING);
   const dockerVersion = dockerInstalled ? getVersion('docker') : 'Not installed (optional)';
   console.log(`  ${dockerIcon} ${chalk.cyan('Docker:')}           ${chalk.white(dockerVersion)}`);
 
   // Kubernetes (kubectl)
   const kubectlInstalled = checkCommand('kubectl');
-  const kubectlIcon = kubectlInstalled ? chalk.green('✓') : chalk.yellow('⚠');
+  const kubectlIcon = kubectlInstalled ? chalk.green(SYMBOLS.CHECKMARK) : chalk.yellow(SYMBOLS.WARNING);
   const kubectlVersion = kubectlInstalled ? getVersion('kubectl') : 'Not installed (optional)';
   console.log(`  ${kubectlIcon} ${chalk.cyan('Kubernetes:')}       ${chalk.white(kubectlVersion)}`);
 
   console.log();
 
   // Available Commands
-  console.log(chalk.white.bold('🚀 Available Commands'));
-  console.log(chalk.gray('─'.repeat(65)));
+  console.log(chalk.white.bold(`${SYMBOLS.ROCKET} ${MESSAGES.HEADERS.AVAILABLE_COMMANDS}`));
+  console.log(chalk.gray(BOX.HORIZONTAL.repeat(SEPARATOR_LENGTHS.MEDIUM)));
   console.log(`  ${chalk.cyan('ent init')}                        Initialize workspace`);
   console.log(`  ${chalk.cyan('ent generate')} <name>             Generate Spring Boot microservice`);
   console.log(`  ${chalk.cyan('ent frontend create')} <name>     Create React application`);
@@ -122,18 +129,18 @@ async function statusCommand() {
 
   // Warnings
   if (!javaInstalled || !mavenInstalled) {
-    console.log(chalk.yellow.bold('⚠️  Warning'));
-    console.log(chalk.gray('─'.repeat(65)));
+    console.log(chalk.yellow.bold(`${SYMBOLS.WARNING} Warning`));
+    console.log(chalk.gray(BOX.HORIZONTAL.repeat(SEPARATOR_LENGTHS.MEDIUM)));
     if (!javaInstalled) {
-      console.log(chalk.yellow('  • Java is required for Spring Boot microservices'));
+      console.log(chalk.yellow(`  ${SYMBOLS.ERROR} Java is required for Spring Boot microservices`));
     }
     if (!mavenInstalled) {
-      console.log(chalk.yellow('  • Maven is required for building Spring Boot applications'));
+      console.log(chalk.yellow(`  ${SYMBOLS.ERROR} Maven is required for building Spring Boot applications`));
     }
     console.log();
   }
 
-  console.log(chalk.gray('─'.repeat(65)));
+  console.log(chalk.gray(BOX.HORIZONTAL.repeat(SEPARATOR_LENGTHS.MEDIUM)));
   console.log();
 }
 

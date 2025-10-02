@@ -11,6 +11,13 @@ const fs = require('fs-extra');
 
 const validation = require('../utils/validation');
 const { generateFromTemplate } = require('../utils/file-generator');
+const {
+  DATABASES,
+  PORTS,
+  EXIT_CODES,
+  SYMBOLS,
+  MESSAGES
+} = require('../constants');
 
 // ========================================
 // DATABASE CONFIGURATION HELPERS
@@ -23,11 +30,11 @@ const { generateFromTemplate } = require('../utils/file-generator');
  */
 function getDatabaseDriverClass(database) {
   const drivers = {
-    postgresql: 'org.postgresql.Driver',
-    mysql: 'com.mysql.cj.jdbc.Driver',
-    h2: 'org.h2.Driver'
+    [DATABASES.POSTGRESQL]: 'org.postgresql.Driver',
+    [DATABASES.MYSQL]: 'com.mysql.cj.jdbc.Driver',
+    [DATABASES.H2]: 'org.h2.Driver'
   };
-  return drivers[database] || drivers.postgresql;
+  return drivers[database] || drivers[DATABASES.POSTGRESQL];
 }
 
 /**
@@ -39,11 +46,11 @@ function getDatabaseDriverClass(database) {
 function getDatabaseUrl(database, serviceName) {
   const dbName = serviceName.replace(/-/g, '_');
   const urls = {
-    postgresql: `jdbc:postgresql://localhost:5432/${dbName}`,
-    mysql: `jdbc:mysql://localhost:3306/${dbName}?useSSL=false&serverTimezone=UTC`,
-    h2: `jdbc:h2:mem:${dbName};DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE`
+    [DATABASES.POSTGRESQL]: `jdbc:postgresql://localhost:${PORTS.POSTGRES}/${dbName}`,
+    [DATABASES.MYSQL]: `jdbc:mysql://localhost:${PORTS.MYSQL}/${dbName}?useSSL=false&serverTimezone=UTC`,
+    [DATABASES.H2]: `jdbc:h2:mem:${dbName};DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE`
   };
-  return urls[database] || urls.postgresql;
+  return urls[database] || urls[DATABASES.POSTGRESQL];
 }
 
 /**
@@ -53,11 +60,11 @@ function getDatabaseUrl(database, serviceName) {
  */
 function getDatabaseDialect(database) {
   const dialects = {
-    postgresql: 'org.hibernate.dialect.PostgreSQLDialect',
-    mysql: 'org.hibernate.dialect.MySQL8Dialect',
-    h2: 'org.hibernate.dialect.H2Dialect'
+    [DATABASES.POSTGRESQL]: 'org.hibernate.dialect.PostgreSQLDialect',
+    [DATABASES.MYSQL]: 'org.hibernate.dialect.MySQL8Dialect',
+    [DATABASES.H2]: 'org.hibernate.dialect.H2Dialect'
   };
-  return dialects[database] || dialects.postgresql;
+  return dialects[database] || dialects[DATABASES.POSTGRESQL];
 }
 
 // ========================================
@@ -270,9 +277,9 @@ function showCompletionMessage(serviceName, templateVars) {
   const { frameworkPackagePath } = templateVars;
 
   console.log();
-  console.log(chalk.green.bold('✅ Microservice generated with Enterprise Framework!'));
+  console.log(chalk.green.bold(`${SYMBOLS.SUCCESS} ${MESSAGES.SUCCESS.MICROSERVICE_GENERATED}`));
   console.log();
-  console.log(chalk.cyan.bold('📦 Framework Location:'), `src/main/java/${frameworkPackagePath}/`);
+  console.log(chalk.cyan.bold(`${SYMBOLS.PACKAGE} ${MESSAGES.INFO.FRAMEWORK_LOCATION}`), `src/main/java/${frameworkPackagePath}/`);
   console.log();
   console.log(chalk.white('The framework provides:'));
   console.log(chalk.gray('  - AbstractEnterpriseEntity (audit fields, soft delete)'));
@@ -395,8 +402,8 @@ async function getInteractiveAnswers(serviceName, options) {
       type: 'list',
       name: 'database',
       message: 'Database type:',
-      choices: ['postgresql', 'mysql', 'h2'],
-      default: 'postgresql'
+      choices: [DATABASES.POSTGRESQL, DATABASES.MYSQL, DATABASES.H2],
+      default: DATABASES.POSTGRESQL
     });
   }
 
@@ -489,7 +496,7 @@ async function getInteractiveAnswers(serviceName, options) {
     domain: options.domain || answers.domain,
     packageName: options.package || answers.packageName,
     entities: options.entities || answers.entities,
-    database: options.database || answers.database || 'postgresql',
+    database: options.database || answers.database || DATABASES.POSTGRESQL,
     frameworkVersion: options.frameworkVersion || answers.frameworkVersion || '1.0.0',
     features: answers.features // Always from prompts to get user selection
   };
@@ -506,7 +513,7 @@ async function getInteractiveAnswers(serviceName, options) {
  */
 async function generateCommand(serviceName, options) {
   try {
-    console.log(chalk.cyan.bold('\n🚀 Enterprise Microservice Generator\n'));
+    console.log(chalk.cyan.bold(`\n${SYMBOLS.ROCKET} ${MESSAGES.HEADERS.ENTERPRISE_MICROSERVICE_GENERATOR}\n`));
 
     // Get complete answers (interactive + CLI options)
     const answers = await getInteractiveAnswers(serviceName, options);
@@ -519,10 +526,10 @@ async function generateCommand(serviceName, options) {
       spinner.fail('Validation failed');
       console.log();
       validation.errors.forEach(error => {
-        console.log(chalk.red(`  ✗ ${error}`));
+        console.log(chalk.red(`  ${SYMBOLS.CROSS} ${error}`));
       });
       console.log();
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
 
     spinner.succeed('Validation passed');
@@ -532,7 +539,7 @@ async function generateCommand(serviceName, options) {
 
   } catch (error) {
     console.log();
-    console.log(chalk.red.bold('❌ Generation failed:'));
+    console.log(chalk.red.bold(`${SYMBOLS.ERROR} ${MESSAGES.ERROR.GENERATION_FAILED}:`));
     console.log(chalk.red(`   ${error.message}`));
     console.log();
 
@@ -540,7 +547,7 @@ async function generateCommand(serviceName, options) {
       console.log(chalk.gray(error.stack));
     }
 
-    process.exit(1);
+    process.exit(EXIT_CODES.ERROR);
   }
 }
 

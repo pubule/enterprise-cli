@@ -12,6 +12,15 @@ const { spawn } = require('child_process');
 
 const validation = require('../utils/validation');
 const { generateFromTemplate } = require('../utils/file-generator');
+const {
+  UI_FRAMEWORKS,
+  BUILD_TOOLS,
+  URLS,
+  EXIT_CODES,
+  SYMBOLS,
+  MESSAGES,
+  FILES
+} = require('../constants');
 
 // ========================================
 // HELPER FUNCTIONS
@@ -66,15 +75,15 @@ function buildTemplateVars(answers) {
   const hasPWA = features.includes('PWA Support');
 
   // UI Framework flags
-  const isMaterialUI = uiFramework === 'material-ui';
-  const isAntDesign = uiFramework === 'ant-design';
-  const isChakraUI = uiFramework === 'chakra-ui';
-  const hasUIFramework = uiFramework !== 'none';
+  const isMaterialUI = uiFramework === UI_FRAMEWORKS.MATERIAL_UI;
+  const isAntDesign = uiFramework === UI_FRAMEWORKS.ANT_DESIGN;
+  const isChakraUI = uiFramework === UI_FRAMEWORKS.CHAKRA_UI;
+  const hasUIFramework = uiFramework !== UI_FRAMEWORKS.NONE;
 
   // Build tool flags
-  const isVite = buildTool === 'vite';
-  const isCRA = buildTool === 'cra';
-  const isWebpack = buildTool === 'webpack';
+  const isVite = buildTool === BUILD_TOOLS.VITE;
+  const isCRA = buildTool === BUILD_TOOLS.CRA;
+  const isWebpack = buildTool === BUILD_TOOLS.WEBPACK;
 
   // Auth flags
   const isJWTLocal = authType === 'jwt-local';
@@ -154,7 +163,7 @@ function validateInputs(answers) {
 
   // Validate API URL
   if (!validateApiUrl(answers.apiBaseUrl)) {
-    errors.push('API base URL must be a valid HTTP/HTTPS URL (e.g., "http://localhost:8080/api/v1")');
+    errors.push(MESSAGES.WARNING.INVALID_API_URL);
   }
 
   return {
@@ -195,12 +204,12 @@ async function getInteractiveAnswers(appName, options) {
       name: 'uiFramework',
       message: 'UI Framework:',
       choices: [
-        { name: 'Material-UI', value: 'material-ui' },
-        { name: 'Ant Design', value: 'ant-design' },
-        { name: 'Chakra UI', value: 'chakra-ui' },
-        { name: 'None (Plain CSS)', value: 'none' }
+        { name: 'Material-UI', value: UI_FRAMEWORKS.MATERIAL_UI },
+        { name: 'Ant Design', value: UI_FRAMEWORKS.ANT_DESIGN },
+        { name: 'Chakra UI', value: UI_FRAMEWORKS.CHAKRA_UI },
+        { name: 'None (Plain CSS)', value: UI_FRAMEWORKS.NONE }
       ],
-      default: 'material-ui'
+      default: UI_FRAMEWORKS.MATERIAL_UI
     });
   }
 
@@ -264,11 +273,11 @@ async function getInteractiveAnswers(appName, options) {
     name: 'buildTool',
     message: 'Build tool:',
     choices: [
-      { name: 'Vite (Recommended)', value: 'vite' },
-      { name: 'Create React App', value: 'cra' },
-      { name: 'Webpack 5', value: 'webpack' }
+      { name: 'Vite (Recommended)', value: BUILD_TOOLS.VITE },
+      { name: 'Create React App', value: BUILD_TOOLS.CRA },
+      { name: 'Webpack 5', value: BUILD_TOOLS.WEBPACK }
     ],
-    default: 'vite'
+    default: BUILD_TOOLS.VITE
   });
 
   // API Base URL
@@ -276,7 +285,7 @@ async function getInteractiveAnswers(appName, options) {
     type: 'input',
     name: 'apiBaseUrl',
     message: 'API base URL:',
-    default: 'http://localhost:8080/api/v1',
+    default: URLS.LOCALHOST_API_V1,
     validate: (input) => {
       if (!validateApiUrl(input)) {
         return 'Must be a valid HTTP/HTTPS URL';
@@ -305,10 +314,10 @@ async function getInteractiveAnswers(appName, options) {
   // Merge with provided options and arguments
   return {
     appName: appName || answers.appName,
-    uiFramework: options.template || answers.uiFramework || 'material-ui',
+    uiFramework: options.template || answers.uiFramework || UI_FRAMEWORKS.MATERIAL_UI,
     features: answers.features, // Always from prompts
-    buildTool: answers.buildTool || 'vite',
-    apiBaseUrl: answers.apiBaseUrl || 'http://localhost:8080/api/v1',
+    buildTool: answers.buildTool || BUILD_TOOLS.VITE,
+    apiBaseUrl: answers.apiBaseUrl || URLS.LOCALHOST_API_V1,
     authType: answers.authType || 'jwt-local'
   };
 }
@@ -322,9 +331,9 @@ function showCompletionMessage(appName, templateVars) {
   const { buildTool, uiFramework, hasTypeScript, hasRedux, hasRouter } = templateVars;
 
   console.log();
-  console.log(chalk.green.bold('✅ React application created successfully!'));
+  console.log(chalk.green.bold(`${SYMBOLS.SUCCESS} ${MESSAGES.SUCCESS.REACT_APP_CREATED}`));
   console.log();
-  console.log(chalk.cyan.bold('📦 Configuration:'));
+  console.log(chalk.cyan.bold(`${SYMBOLS.PACKAGE} ${MESSAGES.INFO.CONFIGURATION}:`));
   console.log(chalk.gray(`  - Build Tool: ${buildTool}`));
   console.log(chalk.gray(`  - UI Framework: ${uiFramework}`));
   console.log(chalk.gray(`  - TypeScript: ${hasTypeScript ? 'Yes' : 'No'}`));
@@ -368,10 +377,10 @@ async function createReactApp(appName, options = {}) {
       spinner.fail('Validation failed');
       console.log();
       validationResult.errors.forEach(error => {
-        console.log(chalk.red(`  ✗ ${error}`));
+        console.log(chalk.red(`  ${SYMBOLS.CROSS} ${error}`));
       });
       console.log();
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
 
     spinner.succeed('Validation passed');
@@ -405,7 +414,7 @@ async function createReactApp(appName, options = {}) {
 
   } catch (error) {
     console.log();
-    console.log(chalk.red.bold('❌ Generation failed:'));
+    console.log(chalk.red.bold(`${SYMBOLS.ERROR} ${MESSAGES.ERROR.GENERATION_FAILED}:`));
     console.log(chalk.red(`   ${error.message}`));
     console.log();
 
@@ -413,7 +422,7 @@ async function createReactApp(appName, options = {}) {
       console.log(chalk.gray(error.stack));
     }
 
-    process.exit(1);
+    process.exit(EXIT_CODES.ERROR);
   }
 }
 
@@ -426,17 +435,17 @@ async function buildReactApp(options = {}) {
     console.log(chalk.cyan.bold('\n🔨 Building React Application\n'));
 
     // Check if package.json exists
-    const packageJsonPath = path.join(process.cwd(), 'package.json');
+    const packageJsonPath = path.join(process.cwd(), FILES.PACKAGE_JSON);
     if (!fs.existsSync(packageJsonPath)) {
-      console.log(chalk.red('❌ package.json not found in current directory'));
+      console.log(chalk.red(`${SYMBOLS.ERROR} ${MESSAGES.ERROR.PACKAGE_JSON_NOT_FOUND}`));
       console.log(chalk.yellow('   Make sure you are in the React application root directory'));
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
 
     // Read package.json to verify it's a React project
     const packageJson = await fs.readJson(packageJsonPath);
     if (!packageJson.dependencies || !packageJson.dependencies.react) {
-      console.log(chalk.yellow('⚠️  Warning: This does not appear to be a React project'));
+      console.log(chalk.yellow(`${SYMBOLS.WARNING} ${MESSAGES.ERROR.NOT_REACT_PROJECT}`));
     }
 
     // Determine build command
@@ -477,17 +486,17 @@ async function buildReactApp(options = {}) {
       });
 
       buildProcess.on('close', (code) => {
-        if (code === 0) {
+        if (code === EXIT_CODES.SUCCESS) {
           spinner.succeed('Build completed successfully');
           console.log();
-          console.log(chalk.green.bold('✅ Production build ready!'));
+          console.log(chalk.green.bold(`${SYMBOLS.SUCCESS} ${MESSAGES.SUCCESS.BUILD_READY}`));
           console.log(chalk.gray('   Check the build/ or dist/ directory for output'));
           console.log();
           resolve();
         } else {
-          spinner.fail('Build failed');
+          spinner.fail(MESSAGES.ERROR.BUILD_FAILED);
           console.log();
-          console.log(chalk.red.bold('❌ Build failed with errors:'));
+          console.log(chalk.red.bold(`${SYMBOLS.ERROR} ${MESSAGES.ERROR.BUILD_FAILED} with errors:`));
           console.log(chalk.gray(errorOutput || output));
           console.log();
           reject(new Error('Build process failed'));
@@ -495,9 +504,9 @@ async function buildReactApp(options = {}) {
       });
 
       buildProcess.on('error', (error) => {
-        spinner.fail('Build failed');
+        spinner.fail(MESSAGES.ERROR.BUILD_FAILED);
         console.log();
-        console.log(chalk.red.bold('❌ Failed to start build process:'));
+        console.log(chalk.red.bold(`${SYMBOLS.ERROR} Failed to start build process:`));
         console.log(chalk.red(`   ${error.message}`));
         console.log();
         reject(error);
@@ -506,10 +515,10 @@ async function buildReactApp(options = {}) {
 
   } catch (error) {
     console.log();
-    console.log(chalk.red.bold('❌ Build failed:'));
+    console.log(chalk.red.bold(`${SYMBOLS.ERROR} ${MESSAGES.ERROR.BUILD_FAILED}:`));
     console.log(chalk.red(`   ${error.message}`));
     console.log();
-    process.exit(1);
+    process.exit(EXIT_CODES.ERROR);
   }
 }
 
@@ -522,11 +531,11 @@ async function testReactApp(options = {}) {
     console.log(chalk.cyan.bold('\n🧪 Running Tests\n'));
 
     // Check if package.json exists
-    const packageJsonPath = path.join(process.cwd(), 'package.json');
+    const packageJsonPath = path.join(process.cwd(), FILES.PACKAGE_JSON);
     if (!fs.existsSync(packageJsonPath)) {
-      console.log(chalk.red('❌ package.json not found in current directory'));
+      console.log(chalk.red(`${SYMBOLS.ERROR} ${MESSAGES.ERROR.PACKAGE_JSON_NOT_FOUND}`));
       console.log(chalk.yellow('   Make sure you are in the React application root directory'));
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
 
     // Read package.json
@@ -534,9 +543,9 @@ async function testReactApp(options = {}) {
 
     // Check if test script exists
     if (!packageJson.scripts?.test) {
-      console.log(chalk.yellow('⚠️  No test script found in package.json'));
+      console.log(chalk.yellow(`${SYMBOLS.WARNING} ${MESSAGES.ERROR.NO_TEST_SCRIPT}`));
       console.log(chalk.gray('   Add a "test" script to package.json to enable testing'));
-      process.exit(0);
+      process.exit(EXIT_CODES.SUCCESS);
     }
 
     // Set environment variables
@@ -579,10 +588,10 @@ async function testReactApp(options = {}) {
       });
 
       testProcess.on('close', (code) => {
-        if (code === 0) {
+        if (code === EXIT_CODES.SUCCESS) {
           spinner.succeed('All tests passed');
           console.log();
-          console.log(chalk.green.bold('✅ Tests completed successfully!'));
+          console.log(chalk.green.bold(`${SYMBOLS.SUCCESS} ${MESSAGES.SUCCESS.TESTS_COMPLETED}`));
 
           if (options.coverage) {
             console.log(chalk.gray('   Coverage report generated in coverage/ directory'));
@@ -607,9 +616,9 @@ async function testReactApp(options = {}) {
 
           resolve();
         } else {
-          spinner.fail('Tests failed');
+          spinner.fail(MESSAGES.ERROR.TESTS_FAILED);
           console.log();
-          console.log(chalk.red.bold('❌ Some tests failed:'));
+          console.log(chalk.red.bold(`${SYMBOLS.ERROR} Some tests failed:`));
           console.log(chalk.gray(output || errorOutput));
           console.log();
           reject(new Error('Test execution failed'));
@@ -617,9 +626,9 @@ async function testReactApp(options = {}) {
       });
 
       testProcess.on('error', (error) => {
-        spinner.fail('Tests failed');
+        spinner.fail(MESSAGES.ERROR.TESTS_FAILED);
         console.log();
-        console.log(chalk.red.bold('❌ Failed to start test process:'));
+        console.log(chalk.red.bold(`${SYMBOLS.ERROR} Failed to start test process:`));
         console.log(chalk.red(`   ${error.message}`));
         console.log();
         reject(error);
@@ -628,10 +637,10 @@ async function testReactApp(options = {}) {
 
   } catch (error) {
     console.log();
-    console.log(chalk.red.bold('❌ Tests failed:'));
+    console.log(chalk.red.bold(`${SYMBOLS.ERROR} ${MESSAGES.ERROR.TESTS_FAILED}:`));
     console.log(chalk.red(`   ${error.message}`));
     console.log();
-    process.exit(1);
+    process.exit(EXIT_CODES.ERROR);
   }
 }
 

@@ -8,6 +8,15 @@ const ora = require('ora');
 const path = require('path');
 const fs = require('fs-extra');
 const { spawn, execSync } = require('child_process');
+const {
+  FILES,
+  URLS,
+  PORTS,
+  PROFILES,
+  EXIT_CODES,
+  SYMBOLS,
+  MESSAGES
+} = require('../constants');
 
 // Directory for storing CLI state
 const CLI_STATE_DIR = '.enterprise-cli';
@@ -191,7 +200,7 @@ async function loadPids() {
   try {
     return await fs.readJson(pidsFile);
   } catch (error) {
-    console.log(chalk.yellow(`⚠️  Warning: Could not read PIDs file: ${error.message}`));
+    console.log(chalk.yellow(`${SYMBOLS.WARNING} ${MESSAGES.WARNING.COULD_NOT_READ_PIDS}: ${error.message}`));
     return {};
   }
 }
@@ -261,7 +270,7 @@ function killProcess(pid, signal = 'SIGTERM') {
  */
 async function setupDevEnvironment(options = {}) {
   try {
-    console.log(chalk.cyan.bold('\n🔧 Development Environment Setup\n'));
+    console.log(chalk.cyan.bold(`\n${SYMBOLS.TOOLS} ${MESSAGES.HEADERS.DEV_ENV_SETUP}\n`));
 
     // Determine scope
     const setupBackend = options.backend || (!options.frontend && !options.docker);
@@ -272,16 +281,16 @@ async function setupDevEnvironment(options = {}) {
 
     // Setup backend
     if (setupBackend) {
-      console.log(chalk.yellow.bold('📦 Backend Setup\n'));
+      console.log(chalk.yellow.bold(`${SYMBOLS.PACKAGE} ${MESSAGES.HEADERS.BACKEND_SETUP}\n`));
 
       // Check Java
       const spinner1 = ora('Checking Java...').start();
       const java = checkJavaInstalled();
       if (!java.installed) {
         spinner1.fail('Java not found');
-        console.log(chalk.red('   ❌ Java is required for backend development'));
+        console.log(chalk.red(`   ${SYMBOLS.ERROR} ${MESSAGES.ERROR.JAVA_REQUIRED}`));
         console.log(chalk.gray('   Install Java JDK 17 or higher'));
-        process.exit(1);
+        process.exit(EXIT_CODES.ERROR);
       }
       spinner1.succeed(`Java ${java.version} found`);
 
@@ -290,16 +299,16 @@ async function setupDevEnvironment(options = {}) {
       const maven = checkMavenInstalled();
       if (!maven.installed) {
         spinner2.fail('Maven not found');
-        console.log(chalk.red('   ❌ Maven is required for backend development'));
+        console.log(chalk.red(`   ${SYMBOLS.ERROR} ${MESSAGES.ERROR.MAVEN_REQUIRED}`));
         console.log(chalk.gray('   Install Apache Maven 3.8 or higher'));
-        process.exit(1);
+        process.exit(EXIT_CODES.ERROR);
       }
       spinner2.succeed(`Maven ${maven.version} found`);
 
       // Check for pom.xml
-      const pomPath = path.join(process.cwd(), 'pom.xml');
+      const pomPath = path.join(process.cwd(), FILES.POM_XML);
       if (!(await fs.pathExists(pomPath))) {
-        console.log(chalk.yellow('   ⚠️  No pom.xml found in current directory'));
+        console.log(chalk.yellow(`   ${SYMBOLS.WARNING} ${MESSAGES.ERROR.POM_XML_NOT_FOUND}`));
         console.log(chalk.gray('   Make sure you are in a Spring Boot project directory'));
       } else {
         // Run mvn clean install
@@ -312,11 +321,11 @@ async function setupDevEnvironment(options = {}) {
             stdio: 'pipe'
           });
           spinner3.succeed('Backend dependencies installed');
-          setupSummary.push('✅ Backend ready');
+          setupSummary.push(`${SYMBOLS.SUCCESS} ${MESSAGES.SUCCESS.BACKEND_READY}`);
         } catch (error) {
           spinner3.fail('Maven build failed');
-          console.log(chalk.red(`   ❌ ${error.message}`));
-          process.exit(1);
+          console.log(chalk.red(`   ${SYMBOLS.ERROR} ${error.message}`));
+          process.exit(EXIT_CODES.ERROR);
         }
       }
 
@@ -325,16 +334,16 @@ async function setupDevEnvironment(options = {}) {
 
     // Setup frontend
     if (setupFrontend) {
-      console.log(chalk.yellow.bold('⚛️  Frontend Setup\n'));
+      console.log(chalk.yellow.bold(`⚛️  ${MESSAGES.HEADERS.FRONTEND_SETUP}\n`));
 
       // Check Node.js
       const spinner1 = ora('Checking Node.js...').start();
       const node = checkNodeInstalled();
       if (!node.installed) {
         spinner1.fail('Node.js not found');
-        console.log(chalk.red('   ❌ Node.js is required for frontend development'));
+        console.log(chalk.red(`   ${SYMBOLS.ERROR} ${MESSAGES.ERROR.NODE_REQUIRED}`));
         console.log(chalk.gray('   Install Node.js 18 or higher'));
-        process.exit(1);
+        process.exit(EXIT_CODES.ERROR);
       }
       spinner1.succeed(`Node.js ${node.version} found`);
 
@@ -343,15 +352,15 @@ async function setupDevEnvironment(options = {}) {
       const npm = checkNpmInstalled();
       if (!npm.installed) {
         spinner2.fail('NPM not found');
-        console.log(chalk.red('   ❌ NPM is required for frontend development'));
-        process.exit(1);
+        console.log(chalk.red(`   ${SYMBOLS.ERROR} ${MESSAGES.ERROR.NPM_REQUIRED}`));
+        process.exit(EXIT_CODES.ERROR);
       }
       spinner2.succeed(`NPM ${npm.version} found`);
 
       // Check for package.json
-      const packagePath = path.join(process.cwd(), 'package.json');
+      const packagePath = path.join(process.cwd(), FILES.PACKAGE_JSON);
       if (!(await fs.pathExists(packagePath))) {
-        console.log(chalk.yellow('   ⚠️  No package.json found in current directory'));
+        console.log(chalk.yellow(`   ${SYMBOLS.WARNING} ${MESSAGES.WARNING.NO_PACKAGE_JSON}`));
         console.log(chalk.gray('   Make sure you are in a React project directory'));
       } else {
         // Run npm install
@@ -364,11 +373,11 @@ async function setupDevEnvironment(options = {}) {
             stdio: 'pipe'
           });
           spinner3.succeed('Frontend dependencies installed');
-          setupSummary.push('✅ Frontend ready');
+          setupSummary.push(`${SYMBOLS.SUCCESS} ${MESSAGES.SUCCESS.FRONTEND_READY}`);
         } catch (error) {
           spinner3.fail('NPM install failed');
-          console.log(chalk.red(`   ❌ ${error.message}`));
-          process.exit(1);
+          console.log(chalk.red(`   ${SYMBOLS.ERROR} ${error.message}`));
+          process.exit(EXIT_CODES.ERROR);
         }
       }
 
@@ -377,16 +386,16 @@ async function setupDevEnvironment(options = {}) {
 
     // Setup Docker
     if (setupDocker) {
-      console.log(chalk.yellow.bold('🐳 Docker Setup\n'));
+      console.log(chalk.yellow.bold(`🐳 ${MESSAGES.HEADERS.DOCKER_SETUP}\n`));
 
       // Check Docker
       const spinner1 = ora('Checking Docker...').start();
       const docker = checkDockerInstalled();
       if (!docker.installed) {
         spinner1.fail('Docker not found');
-        console.log(chalk.red('   ❌ Docker is required for containerized services'));
+        console.log(chalk.red(`   ${SYMBOLS.ERROR} ${MESSAGES.ERROR.DOCKER_REQUIRED}`));
         console.log(chalk.gray('   Install Docker Desktop'));
-        process.exit(1);
+        process.exit(EXIT_CODES.ERROR);
       }
       spinner1.succeed(`Docker ${docker.version} found`);
 
@@ -395,15 +404,15 @@ async function setupDevEnvironment(options = {}) {
       const compose = checkDockerComposeInstalled();
       if (!compose.installed) {
         spinner2.fail('Docker Compose not found');
-        console.log(chalk.red('   ❌ Docker Compose is required'));
-        process.exit(1);
+        console.log(chalk.red(`   ${SYMBOLS.ERROR} ${MESSAGES.ERROR.DOCKER_COMPOSE_REQUIRED}`));
+        process.exit(EXIT_CODES.ERROR);
       }
       spinner2.succeed(`Docker Compose ${compose.version} found`);
 
       // Check for docker-compose.yml
-      const composePath = path.join(process.cwd(), 'docker-compose.yml');
+      const composePath = path.join(process.cwd(), FILES.DOCKER_COMPOSE);
       if (!(await fs.pathExists(composePath))) {
-        console.log(chalk.yellow('   ⚠️  No docker-compose.yml found in current directory'));
+        console.log(chalk.yellow(`   ${SYMBOLS.WARNING} ${MESSAGES.ERROR.DOCKER_COMPOSE_NOT_FOUND}`));
       } else {
         // Start Docker services
         const spinner3 = ora('Starting Docker services...').start();
@@ -422,11 +431,11 @@ async function setupDevEnvironment(options = {}) {
             });
           }
           spinner3.succeed('Docker services started');
-          setupSummary.push('✅ Docker services running');
+          setupSummary.push(`${SYMBOLS.SUCCESS} ${MESSAGES.SUCCESS.DOCKER_READY}`);
         } catch (error) {
           spinner3.fail('Docker Compose failed');
-          console.log(chalk.red(`   ❌ ${error.message}`));
-          process.exit(1);
+          console.log(chalk.red(`   ${SYMBOLS.ERROR} ${error.message}`));
+          process.exit(EXIT_CODES.ERROR);
         }
       }
 
@@ -434,7 +443,7 @@ async function setupDevEnvironment(options = {}) {
     }
 
     // Show summary
-    console.log(chalk.green.bold('✅ Development Environment Setup Complete!\n'));
+    console.log(chalk.green.bold(`${SYMBOLS.SUCCESS} ${MESSAGES.SUCCESS.SETUP_COMPLETE}!\n`));
     if (setupSummary.length > 0) {
       setupSummary.forEach(item => console.log(chalk.gray(`   ${item}`)));
       console.log();
@@ -442,10 +451,10 @@ async function setupDevEnvironment(options = {}) {
 
   } catch (error) {
     console.log();
-    console.log(chalk.red.bold('❌ Setup failed:'));
+    console.log(chalk.red.bold(`${SYMBOLS.ERROR} ${MESSAGES.ERROR.SETUP_FAILED}:`));
     console.log(chalk.red(`   ${error.message}`));
     console.log();
-    process.exit(1);
+    process.exit(EXIT_CODES.ERROR);
   }
 }
 
@@ -455,30 +464,30 @@ async function setupDevEnvironment(options = {}) {
  */
 async function startDevServers(options = {}) {
   try {
-    console.log(chalk.cyan.bold('\n🚀 Starting Development Servers\n'));
+    console.log(chalk.cyan.bold(`\n${SYMBOLS.ROCKET} ${MESSAGES.HEADERS.STARTING_DEV_SERVERS}\n`));
 
     // Determine what to start
     const startBackend = options.backend || options.fullStack || (!options.frontend);
     const startFrontend = options.frontend || options.fullStack;
-    const profile = options.profile || 'dev';
+    const profile = options.profile || PROFILES.DEV;
 
     const startedServices = [];
 
     // Start backend
     if (startBackend) {
-      const pomPath = path.join(process.cwd(), 'pom.xml');
+      const pomPath = path.join(process.cwd(), FILES.POM_XML);
 
       if (!(await fs.pathExists(pomPath))) {
-        console.log(chalk.yellow('⚠️  No pom.xml found - skipping backend'));
+        console.log(chalk.yellow(`${SYMBOLS.WARNING} ${MESSAGES.WARNING.NO_POM_XML}`));
       } else {
         // Check dependencies
         const java = checkJavaInstalled();
         const maven = checkMavenInstalled();
 
         if (!java.installed || !maven.installed) {
-          console.log(chalk.red('❌ Java and Maven are required for backend'));
+          console.log(chalk.red(`${SYMBOLS.ERROR} Java and Maven are required for backend`));
           console.log(chalk.gray('   Run: enterprise dev setup --backend'));
-          process.exit(1);
+          process.exit(EXIT_CODES.ERROR);
         }
 
         const spinner = ora('Starting backend server...').start();
@@ -499,7 +508,7 @@ async function startDevServers(options = {}) {
           await savePid('backend', backendProcess.pid);
 
           spinner.succeed('Backend server started');
-          console.log(chalk.green('   ✅ Backend: http://localhost:8080'));
+          console.log(chalk.green(`   ${SYMBOLS.SUCCESS} Backend: ${URLS.LOCALHOST_BACKEND}`));
           console.log(chalk.gray(`   PID: ${backendProcess.pid}`));
           console.log(chalk.gray(`   Profile: ${profile}`));
           console.log();
@@ -507,26 +516,26 @@ async function startDevServers(options = {}) {
           startedServices.push('backend');
         } catch (error) {
           spinner.fail('Failed to start backend');
-          console.log(chalk.red(`   ❌ ${error.message}`));
+          console.log(chalk.red(`   ${SYMBOLS.ERROR} ${error.message}`));
         }
       }
     }
 
     // Start frontend
     if (startFrontend) {
-      const packagePath = path.join(process.cwd(), 'package.json');
+      const packagePath = path.join(process.cwd(), FILES.PACKAGE_JSON);
 
       if (!(await fs.pathExists(packagePath))) {
-        console.log(chalk.yellow('⚠️  No package.json found - skipping frontend'));
+        console.log(chalk.yellow(`${SYMBOLS.WARNING} ${MESSAGES.WARNING.NO_PACKAGE_JSON}`));
       } else {
         // Check dependencies
         const node = checkNodeInstalled();
         const npm = checkNpmInstalled();
 
         if (!node.installed || !npm.installed) {
-          console.log(chalk.red('❌ Node.js and NPM are required for frontend'));
+          console.log(chalk.red(`${SYMBOLS.ERROR} Node.js and NPM are required for frontend`));
           console.log(chalk.gray('   Run: enterprise dev setup --frontend'));
-          process.exit(1);
+          process.exit(EXIT_CODES.ERROR);
         }
 
         // Check for dev script
@@ -534,7 +543,7 @@ async function startDevServers(options = {}) {
         const startScript = packageJson.scripts?.dev || packageJson.scripts?.start;
 
         if (!startScript) {
-          console.log(chalk.yellow('⚠️  No dev or start script found in package.json'));
+          console.log(chalk.yellow(`${SYMBOLS.WARNING} ${MESSAGES.ERROR.NO_DEV_SCRIPT}`));
         } else {
           const spinner = ora('Starting frontend server...').start();
 
@@ -556,14 +565,14 @@ async function startDevServers(options = {}) {
             await savePid('frontend', frontendProcess.pid);
 
             spinner.succeed('Frontend server started');
-            console.log(chalk.green('   ✅ Frontend: http://localhost:3000'));
+            console.log(chalk.green(`   ${SYMBOLS.SUCCESS} Frontend: ${URLS.LOCALHOST_FRONTEND}`));
             console.log(chalk.gray(`   PID: ${frontendProcess.pid}`));
             console.log();
 
             startedServices.push('frontend');
           } catch (error) {
             spinner.fail('Failed to start frontend');
-            console.log(chalk.red(`   ❌ ${error.message}`));
+            console.log(chalk.red(`   ${SYMBOLS.ERROR} ${error.message}`));
           }
         }
       }
@@ -571,21 +580,21 @@ async function startDevServers(options = {}) {
 
     // Show summary
     if (startedServices.length > 0) {
-      console.log(chalk.green.bold('✅ Development servers started!\n'));
+      console.log(chalk.green.bold(`${SYMBOLS.SUCCESS} ${MESSAGES.SUCCESS.SERVERS_STARTED}!\n`));
       console.log(chalk.gray('   To stop servers:  enterprise dev stop'));
       console.log(chalk.gray('   To view logs:     enterprise dev logs'));
       console.log();
     } else {
-      console.log(chalk.yellow('⚠️  No servers were started'));
+      console.log(chalk.yellow(`${SYMBOLS.WARNING} ${MESSAGES.WARNING.NO_SERVERS_STARTED}`));
       console.log();
     }
 
   } catch (error) {
     console.log();
-    console.log(chalk.red.bold('❌ Failed to start servers:'));
+    console.log(chalk.red.bold(`${SYMBOLS.ERROR} ${MESSAGES.ERROR.START_FAILED}:`));
     console.log(chalk.red(`   ${error.message}`));
     console.log();
-    process.exit(1);
+    process.exit(EXIT_CODES.ERROR);
   }
 }
 
@@ -601,7 +610,7 @@ async function stopDevServers(options = {}) {
     const pids = await loadPids();
 
     if (Object.keys(pids).length === 0) {
-      console.log(chalk.yellow('⚠️  No development servers are running'));
+      console.log(chalk.yellow(`${SYMBOLS.WARNING} ${MESSAGES.WARNING.NO_SERVERS_RUNNING}`));
       console.log();
       return;
     }
@@ -644,15 +653,15 @@ async function stopDevServers(options = {}) {
     await clearPids();
 
     console.log();
-    console.log(chalk.green.bold('✅ All development servers stopped'));
+    console.log(chalk.green.bold(`${SYMBOLS.SUCCESS} ${MESSAGES.SUCCESS.SERVERS_STOPPED}`));
     console.log();
 
   } catch (error) {
     console.log();
-    console.log(chalk.red.bold('❌ Failed to stop servers:'));
+    console.log(chalk.red.bold(`${SYMBOLS.ERROR} ${MESSAGES.ERROR.STOP_FAILED}:`));
     console.log(chalk.red(`   ${error.message}`));
     console.log();
-    process.exit(1);
+    process.exit(EXIT_CODES.ERROR);
   }
 }
 
@@ -686,7 +695,7 @@ async function showDevLogs(options = {}) {
       }
 
       if (logFiles.length === 0 && showBackend) {
-        console.log(chalk.yellow('⚠️  Backend log file not found'));
+        console.log(chalk.yellow(`${SYMBOLS.WARNING} ${MESSAGES.WARNING.BACKEND_LOG_NOT_FOUND}`));
         console.log(chalk.gray('   Expected locations:'));
         possibleBackendLogs.forEach(p => console.log(chalk.gray(`   - ${p}`)));
         console.log();
@@ -708,14 +717,14 @@ async function showDevLogs(options = {}) {
       }
 
       if (logFiles.length === 0 && showFrontend) {
-        console.log(chalk.yellow('⚠️  Frontend log file not found'));
+        console.log(chalk.yellow(`${SYMBOLS.WARNING} ${MESSAGES.WARNING.FRONTEND_LOG_NOT_FOUND}`));
         console.log(chalk.gray('   Frontend logs are typically shown in the console'));
         console.log();
       }
     }
 
     if (logFiles.length === 0) {
-      console.log(chalk.yellow('⚠️  No log files found'));
+      console.log(chalk.yellow(`${SYMBOLS.WARNING} ${MESSAGES.WARNING.NO_LOG_FILES}`));
       console.log();
       return;
     }
@@ -743,22 +752,22 @@ async function showDevLogs(options = {}) {
           console.log();
         }
       } catch (error) {
-        console.log(chalk.red(`   ❌ Failed to read log file: ${error.message}\n`));
+        console.log(chalk.red(`   ${SYMBOLS.ERROR} Failed to read log file: ${error.message}\n`));
       }
     }
 
     if (follow && logFiles.length > 0) {
-      console.log(chalk.yellow('⚠️  Live log following not yet implemented'));
+      console.log(chalk.yellow(`${SYMBOLS.WARNING} ${MESSAGES.WARNING.FOLLOW_NOT_IMPLEMENTED}`));
       console.log(chalk.gray('   Use: tail -f ' + logFiles[0].path));
       console.log();
     }
 
   } catch (error) {
     console.log();
-    console.log(chalk.red.bold('❌ Failed to show logs:'));
+    console.log(chalk.red.bold(`${SYMBOLS.ERROR} ${MESSAGES.ERROR.LOGS_FAILED}:`));
     console.log(chalk.red(`   ${error.message}`));
     console.log();
-    process.exit(1);
+    process.exit(EXIT_CODES.ERROR);
   }
 }
 
