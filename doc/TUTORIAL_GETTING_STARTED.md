@@ -77,17 +77,65 @@ You should see the Enterprise CLI banner and available commands.
 
 ---
 
-## Step 2: Generate Your First Microservice
+## Step 2: Initialize Your Workspace
+
+Before generating projects, initialize the Enterprise CLI workspace:
+
+```bash
+ent init
+```
+
+**What this does:**
+
+- ✅ Creates `.enterprise/` directory for CLI workspace files
+- ✅ Creates `templates/custom/` directory for your custom templates
+- ✅ Creates `.enterpriserc` configuration file with Framework version 2.0.0
+- ✅ Sets up workspace defaults (database, Docker, Kubernetes preferences)
+
+**Expected output:**
+
+```
+✅ Enterprise CLI workspace initialized!
+Ready to generate microservices with Enterprise Framework foundation.
+
+Created:
+  • .enterprise/
+  • templates/custom/
+  • .enterpriserc
+
+Next steps:
+  ent generate <service-name>  - Generate a microservice
+  ent frontend create <app-name> - Create a React app
+  ent status                    - Check workspace status
+```
+
+**Verify workspace status:**
+
+```bash
+ent status
+```
+
+This shows:
+- CLI Version (1.0.0)
+- Framework Version (2.0.0)
+- Workspace status (initialized)
+- Environment check (Java, Maven, Node, Docker)
+
+> 💡 **Tip:** Run `ent status` anytime to check your environment setup and verify all required tools are installed.
+
+---
+
+## Step 3: Generate Your First Microservice
 
 Let's create a simple Task Management microservice.
 
-### 2.1 Run the Generate Command
+### 3.1 Run the Generate Command
 
 ```bash
 ent generate task-service
 ```
 
-### 2.2 Follow the Interactive Prompts
+### 3.2 Follow the Interactive Prompts
 
 The CLI will ask you several questions. Here's what to answer for this tutorial:
 
@@ -115,7 +163,7 @@ The CLI will ask you several questions. Here's what to answer for this tutorial:
 
 **Press Enter** to generate the project.
 
-### 2.3 What Just Happened?
+### 3.3 What Just Happened?
 
 Enterprise CLI created a complete Spring Boot project:
 
@@ -147,11 +195,11 @@ task-service/
 
 ---
 
-## Step 3: Explore the Generated Code
+## Step 4: Explore the Generated Code
 
 Let's look at the key files:
 
-### 3.1 The Task Entity
+### 4.1 The Task Entity
 
 Navigate to the project:
 
@@ -183,7 +231,7 @@ public class Task extends AbstractEnterpriseEntity {
 - This gives you automatic fields: `id`, `createdAt`, `updatedAt`, `createdBy`, `updatedBy`, `deleted`
 - You get soft-delete support automatically!
 
-### 3.2 The Task Repository
+### 4.2 The Task Repository
 
 Open `src/main/java/com/company/task/repository/TaskRepository.java`:
 
@@ -201,7 +249,7 @@ public interface TaskRepository extends AbstractEnterpriseRepository<Task, Long>
 - Common methods like `findAll()`, `findById()`, `save()`, `delete()` are inherited
 - You only add custom query methods
 
-### 3.3 The Task Service
+### 4.3 The Task Service
 
 Open `src/main/java/com/company/task/service/TaskService.java`:
 
@@ -243,7 +291,7 @@ public class TaskService extends AbstractEnterpriseService<Task, Long> {
 - Validation with `ValidationResult` (errors + warnings)
 - Event publishing with typed events built-in
 
-### 3.4 The Task Controller
+### 4.4 The Task Controller
 
 Open `src/main/java/com/company/task/controller/TaskController.java`:
 
@@ -303,7 +351,7 @@ public class TaskController extends AbstractEnterpriseController<
   - `DELETE /api/v1/tasks/{id}` - Delete (soft or hard)
   - `GET /api/v1/tasks/search` - Search with criteria
 
-### 3.5 DTOs and Mapper (New in v2.0)
+### 4.5 DTOs and Mapper (New in v2.0)
 
 The v2.0 framework uses **DTOs** (Data Transfer Objects) to separate API layer from domain layer.
 
@@ -381,11 +429,11 @@ public class TaskMapper implements EntityMapper<Task, TaskRequest, TaskResponse>
 
 ---
 
-## Step 4: Setup the Development Environment
+## Step 5: Setup the Development Environment
 
 Now let's setup everything needed to run the application.
 
-### 4.1 Setup Backend Dependencies
+### 5.1 Setup Backend Dependencies
 
 ```bash
 ent dev setup --backend
@@ -411,7 +459,7 @@ ent dev setup --backend
    ✅ Backend ready
 ```
 
-### 4.2 Start the Backend Server
+### 5.2 Start the Backend Server
 
 ```bash
 ent dev start --backend
@@ -437,7 +485,7 @@ ent dev start --backend
    To view logs:     enterprise dev logs
 ```
 
-### 4.3 Test the Backend API
+### 5.3 Test the Backend API
 
 Open your browser or use `curl`:
 
@@ -466,23 +514,23 @@ curl http://localhost:8080/api/v1/tasks
 
 ---
 
-## Step 5: Generate a React Frontend
+## Step 6: Generate a React Frontend
 
 Now let's create a frontend to interact with our backend.
 
-### 5.1 Go to Parent Directory
+### 6.1 Go to Parent Directory
 
 ```bash
 cd ..
 ```
 
-### 5.2 Generate React App
+### 6.2 Generate React App
 
 ```bash
 ent frontend create task-ui
 ```
 
-### 5.3 Follow the Interactive Prompts
+### 6.3 Follow the Interactive Prompts
 
 ```
 ? UI Framework: Material-UI
@@ -504,7 +552,7 @@ ent frontend create task-ui
 
 **Press Enter** to generate.
 
-### 5.4 What Was Generated?
+### 6.4 What Was Generated?
 
 ```
 task-ui/
@@ -524,21 +572,21 @@ task-ui/
 
 ---
 
-## Step 6: Run the Frontend
+## Step 7: Run the Frontend
 
-### 6.1 Navigate to Frontend
+### 7.1 Navigate to Frontend
 
 ```bash
 cd task-ui
 ```
 
-### 6.2 Install Dependencies
+### 7.2 Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 6.3 Start the Dev Server
+### 7.3 Start the Dev Server
 
 ```bash
 ent dev start --frontend
@@ -555,7 +603,7 @@ ent dev start --frontend
 ✅ Development servers started!
 ```
 
-### 6.4 Open in Browser
+### 7.4 Open in Browser
 
 Navigate to [http://localhost:3000](http://localhost:3000)
 
@@ -563,11 +611,11 @@ You should see your React application!
 
 ---
 
-## Step 7: Make Your First Change
+## Step 8: Make Your First Change
 
 Let's customize the Task entity.
 
-### 7.1 Add a New Field
+### 8.1 Add a New Field
 
 Go back to the backend project:
 
@@ -612,14 +660,14 @@ public enum Priority {
 }
 ```
 
-### 7.2 Restart the Backend
+### 8.2 Restart the Backend
 
 ```bash
 ent dev stop
 ent dev start --backend
 ```
 
-### 7.3 Test the New Field
+### 8.3 Test the New Field
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/tasks \
@@ -637,9 +685,9 @@ curl -X POST http://localhost:8080/api/v1/tasks \
 
 ---
 
-## Step 8: View Logs and Stop Servers
+## Step 9: View Logs and Stop Servers
 
-### 8.1 View Backend Logs
+### 9.1 View Backend Logs
 
 ```bash
 ent dev logs --backend
@@ -647,13 +695,13 @@ ent dev logs --backend
 
 This shows the last 50 lines of the backend log.
 
-### 8.2 View Frontend Logs
+### 9.2 View Frontend Logs
 
 ```bash
 ent dev logs --frontend
 ```
 
-### 8.3 Stop All Servers
+### 9.3 Stop All Servers
 
 ```bash
 ent dev stop
@@ -671,11 +719,11 @@ ent dev stop
 
 ---
 
-## Step 9: Build for Production
+## Step 10: Build for Production
 
 When you're ready to deploy:
 
-### 9.1 Build Backend
+### 10.1 Build Backend
 
 ```bash
 cd task-service
@@ -684,7 +732,7 @@ mvn clean package
 
 The JAR file will be in `target/task-service-1.0.0.jar`
 
-### 9.2 Build Frontend
+### 10.2 Build Frontend
 
 ```bash
 cd ../task-ui

@@ -27,8 +27,10 @@ Enterprise CLI is built with a modular architecture that separates concerns into
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
 │  │   Commands   │  │  Utilities   │  │  Templates   │    │
 │  │              │  │              │  │              │    │
-│  │  generate    │  │  validation  │  │  microservice│    │
-│  │  frontend    │  │  file-gen    │  │  react       │    │
+│  │  init        │  │  config      │  │  microservice│    │
+│  │  status      │  │  validation  │  │  react       │    │
+│  │  generate    │  │  file-gen    │  │              │    │
+│  │  frontend    │  │              │  │              │    │
 │  │  dev         │  │              │  │              │    │
 │  └──────────────┘  └──────────────┘  └──────────────┘    │
 │         │                  │                  │            │
@@ -51,7 +53,11 @@ enterprise-cli/
 │   └── enterprise-cli.js              # CLI entry point
 │
 ├── src/
+│   ├── config.js                      # CLI and Framework configuration
+│   │
 │   ├── commands/                      # Command implementations
+│   │   ├── init.js                    # Workspace initialization
+│   │   ├── status.js                  # Status and environment check
 │   │   ├── generate.js                # Backend generation
 │   │   ├── frontend.js                # Frontend management
 │   │   └── dev.js                     # Dev environment
@@ -111,13 +117,18 @@ Enterprise CLI uses [Commander.js](https://github.com/tj/commander.js) for comma
 ```
 enterprise-cli
 │
-├── init                    (not yet implemented)
+├── init                    Initialize Enterprise CLI workspace
+│                           Creates .enterprise/, templates/custom/, .enterpriserc
+│
+├── status                  Show workspace status and environment info
+│                           Displays CLI version, Framework version, env check
 │
 ├── generate [service]      Main microservice generator
 │   ├── Options:
 │   ├── --domain <domain>
 │   ├── --entities <entities>
-│   └── --database <db>
+│   ├── --database <db>
+│   └── --framework-version <version>
 │
 ├── frontend                Frontend management group
 │   ├── create [app]        Create React app
@@ -222,6 +233,40 @@ program
 ---
 
 ## Utility Modules
+
+### config.js
+
+Central configuration file for CLI and Framework versions, defaults, and paths.
+
+**Configuration Properties:**
+- `CLI_VERSION` - Current CLI version (from package.json)
+- `FRAMEWORK_VERSION` - Enterprise Framework version (2.0.0)
+- `CLI_NAME` - Display name for CLI
+- `DEFAULTS` - Default values for all options (database, auth, docker, etc.)
+- `SUPPORTED` - Lists of supported options (databases, UI frameworks, build tools)
+- `PATHS` - Template and workspace paths
+
+**Usage Example:**
+```javascript
+const { FRAMEWORK_VERSION, DEFAULTS, PATHS } = require('../config');
+
+// Use framework version
+console.log(`Framework: v${FRAMEWORK_VERSION}`);
+
+// Use defaults
+const database = options.database || DEFAULTS.database; // postgresql
+
+// Use paths
+const templatePath = path.join(__dirname, '..', PATHS.microserviceSkeleton);
+```
+
+**Benefits:**
+- ✅ Single source of truth for versions
+- ✅ Consistent defaults across commands
+- ✅ Easy to update framework version in one place
+- ✅ Centralized path management
+
+---
 
 ### validation.js
 

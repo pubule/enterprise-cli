@@ -118,6 +118,8 @@ ent dev start --frontend
 
 | Command | Description |
 |---------|-------------|
+| `ent init` | Initialize Enterprise CLI workspace (run this first!) |
+| `ent status` | Show CLI and Framework versions, workspace status, environment info |
 | `ent generate` | Generate Spring Boot microservice with Enterprise Framework |
 | `ent frontend create` | Create React application with modern tooling |
 | `ent frontend build` | Build React app for production |
