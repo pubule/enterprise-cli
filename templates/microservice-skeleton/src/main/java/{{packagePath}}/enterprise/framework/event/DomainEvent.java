@@ -5,15 +5,25 @@
 package {{packageName}}.enterprise.framework.event;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * Base interface for domain events.
+ * Domain events represent significant occurrences in the business domain.
  *
+ * @param <T> the payload type
  * @author Enterprise CLI
  * @version {{frameworkVersion}}
  * @since 1.0.0
  */
-public interface DomainEvent {
+public interface DomainEvent<T> {
+
+    /**
+     * Gets the unique event identifier.
+     *
+     * @return the event ID
+     */
+    String getEventId();
 
     /**
      * Gets the event type identifier.
@@ -23,6 +33,13 @@ public interface DomainEvent {
     String getEventType();
 
     /**
+     * Gets the event payload (the domain object).
+     *
+     * @return the payload
+     */
+    T getPayload();
+
+    /**
      * Gets when the event occurred.
      *
      * @return the occurrence timestamp
@@ -30,9 +47,16 @@ public interface DomainEvent {
     LocalDateTime getOccurredAt();
 
     /**
-     * Gets the ID of the entity related to this event.
+     * Gets the event source (typically the entity class name).
      *
-     * @return the entity ID
+     * @return the source identifier
      */
-    Object getEntityId();
+    String getSource();
+
+    /**
+     * Gets additional event metadata.
+     *
+     * @return metadata map
+     */
+    Map<String, Object> getMetadata();
 }

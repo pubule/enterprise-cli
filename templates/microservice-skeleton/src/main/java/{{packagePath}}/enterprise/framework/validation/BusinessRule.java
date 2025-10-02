@@ -6,6 +6,8 @@ package {{packageName}}.enterprise.framework.validation;
 
 /**
  * Interface for business rules.
+ * Business rules are evaluated during entity operations to enforce domain logic.
+ * Rules can have priorities - lower numbers execute first.
  *
  * @param <T> the entity type
  * @author Enterprise CLI
@@ -15,20 +17,50 @@ package {{packageName}}.enterprise.framework.validation;
 public interface BusinessRule<T> {
 
     /**
-     * Checks if this rule applies to the given entity and context.
+     * Gets the rule name for identification and logging.
      *
-     * @param entity the entity
-     * @param context the rule context
-     * @return true if rule should be executed
+     * @return the rule name
      */
-    boolean applies(T entity, RuleContext context);
+    String getRuleName();
 
     /**
-     * Executes the business rule.
+     * Evaluates the business rule against an entity.
+     *
+     * @param entity the entity to evaluate
+     * @param context the rule context
+     * @return the rule result
+     */
+    RuleResult evaluate(T entity, RuleContext context);
+
+    /**
+     * Gets the rule priority.
+     * Lower numbers = higher priority (execute first).
+     * Default priority is 100.
+     *
+     * @return the priority value
+     */
+    default int getPriority() {
+        return 100;
+    }
+
+    /**
+     * Checks if this rule applies to the given entity and context.
+     * Default implementation returns true (always applies).
      *
      * @param entity the entity
      * @param context the rule context
-     * @throws {{packageName}}.enterprise.framework.exception.BusinessException if rule fails
+     * @return true if rule should be evaluated
      */
-    void execute(T entity, RuleContext context);
+    default boolean applies(T entity, RuleContext context) {
+        return true;
+    }
+
+    /**
+     * Gets the rule description for documentation.
+     *
+     * @return the rule description
+     */
+    default String getDescription() {
+        return getRuleName();
+    }
 }

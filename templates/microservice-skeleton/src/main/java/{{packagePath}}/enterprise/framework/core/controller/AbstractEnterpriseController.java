@@ -8,7 +8,7 @@ import {{packageName}}.enterprise.framework.core.entity.AbstractAuditableEntity;
 import {{packageName}}.enterprise.framework.core.service.AbstractEnterpriseService;
 import {{packageName}}.enterprise.framework.dto.ApiResponse;
 import {{packageName}}.enterprise.framework.dto.EntityMapper;
-import {{packageName}}.enterprise.framework.dto.PageResponse;
+import {{packageName}}.enterprise.framework.dto.PagedResponse;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,7 +99,7 @@ public abstract class AbstractEnterpriseController<
      * @return page of entity responses
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<PageResponse<RES>>> findAll(
+    public ResponseEntity<ApiResponse<PagedResponse<RES>>> findAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "id") String sortBy,
@@ -116,7 +116,7 @@ public abstract class AbstractEnterpriseController<
         Page<T> entityPage = service.findAll(pageable);
         Page<RES> responsePage = entityPage.map(mapper::toResponse);
 
-        PageResponse<RES> pageResponse = PageResponse.from(responsePage);
+        PagedResponse<RES> pageResponse = PagedResponse.from(responsePage);
 
         return ResponseEntity.ok(ApiResponse.success(pageResponse));
     }
@@ -195,7 +195,7 @@ public abstract class AbstractEnterpriseController<
      * @return page of matching entity responses
      */
     @GetMapping("/search")
-    public ResponseEntity<ApiResponse<PageResponse<RES>>> search(
+    public ResponseEntity<ApiResponse<PagedResponse<RES>>> search(
             @RequestParam Map<String, String> criteria,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -220,7 +220,7 @@ public abstract class AbstractEnterpriseController<
         Page<T> entityPage = service.findWithCriteria(spec, pageable);
         Page<RES> responsePage = entityPage.map(mapper::toResponse);
 
-        PageResponse<RES> pageResponse = PageResponse.from(responsePage);
+        PagedResponse<RES> pageResponse = PagedResponse.from(responsePage);
 
         return ResponseEntity.ok(ApiResponse.success(pageResponse));
     }

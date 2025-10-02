@@ -17,11 +17,15 @@ Enterprise CLI automates the creation of:
 
 ## Key Features
 
-✅ **Enterprise Framework Integration**
+✅ **Enterprise Framework v2.0** 🆕
+- Advanced validation with field-level errors and warnings
+- Typed domain events with metadata and async support
+- Structured error handling with ErrorDetails
+- DTO pattern with automatic entity mapping
+- Business rules with priority system
 - Base classes for entities, services, controllers, repositories
-- Built-in audit logging, soft delete, validation
-- Event publishing system
-- Reduces boilerplate by 60-70%
+- Built-in audit logging, soft delete, multi-tenancy
+- Reduces boilerplate by 70%
 
 ✅ **Modern Tech Stack**
 - Spring Boot 3.x + Security + JPA + Camel
@@ -171,19 +175,39 @@ ent dev start --frontend
 ```
 user-service/
 ├── src/main/java/com/company/user/
-│   ├── enterprise/framework/          # Enterprise Framework
-│   │   ├── entity/
-│   │   │   └── AbstractEnterpriseEntity.java
-│   │   ├── repository/
-│   │   │   └── AbstractEnterpriseRepository.java
-│   │   ├── service/
-│   │   │   └── AbstractEnterpriseService.java
-│   │   ├── controller/
-│   │   │   └── AbstractEnterpriseController.java
-│   │   └── validation/
-│   │       └── BusinessValidator.java
+│   ├── enterprise/framework/          # Enterprise Framework v2.0
+│   │   ├── core/
+│   │   │   ├── entity/
+│   │   │   │   └── AbstractAuditableEntity.java
+│   │   │   ├── repository/
+│   │   │   │   └── AbstractEnterpriseRepository.java
+│   │   │   ├── service/
+│   │   │   │   └── AbstractEnterpriseService.java
+│   │   │   └── controller/
+│   │   │       └── AbstractEnterpriseController.java
+│   │   ├── dto/                       # Response wrappers
+│   │   │   ├── ApiResponse.java
+│   │   │   ├── PagedResponse.java
+│   │   │   ├── ErrorDetails.java
+│   │   │   └── EntityMapper.java
+│   │   ├── validation/                # Validation framework
+│   │   │   ├── ValidationResult.java
+│   │   │   ├── BusinessRule.java
+│   │   │   └── BusinessValidator.java
+│   │   ├── event/                     # Event system
+│   │   │   ├── DomainEvent.java
+│   │   │   ├── AbstractDomainEvent.java
+│   │   │   └── EventPublisher.java
+│   │   └── exception/                 # Exception handling
+│   │       ├── BusinessException.java
+│   │       ├── ValidationException.java
+│   │       └── GlobalExceptionHandler.java
 │   ├── entity/                        # Your entities
 │   │   └── User.java
+│   ├── dto/                           # Your DTOs
+│   │   ├── UserRequest.java
+│   │   ├── UserResponse.java
+│   │   └── UserMapper.java
 │   ├── repository/                    # Your repositories
 │   │   └── UserRepository.java
 │   ├── service/                       # Your services

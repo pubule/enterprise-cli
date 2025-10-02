@@ -4,10 +4,6 @@
  */
 package {{packageName}}.enterprise.framework.event;
 
-import {{packageName}}.enterprise.framework.core.entity.AbstractAuditableEntity;
-
-import java.time.LocalDateTime;
-
 /**
  * Event published when an entity is updated.
  *
@@ -16,36 +12,23 @@ import java.time.LocalDateTime;
  * @version {{frameworkVersion}}
  * @since 1.0.0
  */
-public class EntityUpdatedEvent<T extends AbstractAuditableEntity<?>> implements DomainEvent {
+public class EntityUpdatedEvent<T> extends AbstractDomainEvent<T> {
 
-    private final T entity;
-    private final LocalDateTime occurredAt;
-
+    /**
+     * Creates a new entity updated event.
+     *
+     * @param entity the updated entity
+     */
     public EntityUpdatedEvent(T entity) {
-        this.entity = entity;
-        this.occurredAt = LocalDateTime.now();
+        super("ENTITY_UPDATED", entity, entity.getClass().getSimpleName());
     }
 
-    @Override
-    public String getEventType() {
-        return "ENTITY_UPDATED";
-    }
-
-    @Override
-    public LocalDateTime getOccurredAt() {
-        return occurredAt;
-    }
-
-    @Override
-    public Object getEntityId() {
-        return entity.getId();
-    }
-
+    /**
+     * Gets the updated entity.
+     *
+     * @return the entity
+     */
     public T getEntity() {
-        return entity;
-    }
-
-    public String getEntityType() {
-        return entity.getClass().getSimpleName();
+        return getPayload();
     }
 }

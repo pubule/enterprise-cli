@@ -69,7 +69,7 @@ public abstract class AbstractEnterpriseService<T extends AbstractAuditableEntit
         ValidationResult validationResult = validator.validate(entity, ValidationContext.forCreate());
         if (!validationResult.isValid()) {
             log.warn("Validation failed for create: {}", validationResult.getErrors());
-            throw new ValidationException(validationResult.getErrors());
+            throw ValidationException.fromValidationResult(validationResult);
         }
 
         // Business rules
@@ -104,7 +104,7 @@ public abstract class AbstractEnterpriseService<T extends AbstractAuditableEntit
         ValidationResult validationResult = validator.validate(entity, ValidationContext.forUpdate(existing));
         if (!validationResult.isValid()) {
             log.warn("Validation failed for update: {}", validationResult.getErrors());
-            throw new ValidationException(validationResult.getErrors());
+            throw ValidationException.fromValidationResult(validationResult);
         }
 
         // Business rules

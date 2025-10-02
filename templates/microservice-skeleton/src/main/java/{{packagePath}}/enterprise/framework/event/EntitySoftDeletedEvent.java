@@ -4,48 +4,31 @@
  */
 package {{packageName}}.enterprise.framework.event;
 
-import {{packageName}}.enterprise.framework.core.entity.AbstractAuditableEntity;
-
-import java.time.LocalDateTime;
-
 /**
- * Event published when an entity is soft deleted.
+ * Event published when an entity is soft deleted (marked as deleted).
  *
  * @param <T> the entity type
  * @author Enterprise CLI
  * @version {{frameworkVersion}}
  * @since 1.0.0
  */
-public class EntitySoftDeletedEvent<T extends AbstractAuditableEntity<?>> implements DomainEvent {
+public class EntitySoftDeletedEvent<T> extends AbstractDomainEvent<T> {
 
-    private final T entity;
-    private final LocalDateTime occurredAt;
-
+    /**
+     * Creates a new entity soft deleted event.
+     *
+     * @param entity the soft deleted entity
+     */
     public EntitySoftDeletedEvent(T entity) {
-        this.entity = entity;
-        this.occurredAt = LocalDateTime.now();
+        super("ENTITY_SOFT_DELETED", entity, entity.getClass().getSimpleName());
     }
 
-    @Override
-    public String getEventType() {
-        return "ENTITY_SOFT_DELETED";
-    }
-
-    @Override
-    public LocalDateTime getOccurredAt() {
-        return occurredAt;
-    }
-
-    @Override
-    public Object getEntityId() {
-        return entity.getId();
-    }
-
+    /**
+     * Gets the soft deleted entity.
+     *
+     * @return the entity
+     */
     public T getEntity() {
-        return entity;
-    }
-
-    public String getEntityType() {
-        return entity.getClass().getSimpleName();
+        return getPayload();
     }
 }

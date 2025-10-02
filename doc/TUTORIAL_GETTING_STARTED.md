@@ -4,6 +4,8 @@
 
 Welcome! This tutorial will teach you how to use Enterprise CLI to build modern enterprise applications. No prior experience with the CLI is required.
 
+> ⚡ **Updated for Enterprise Framework v2.0** - This tutorial uses the latest framework with advanced validation, typed events, and structured error handling.
+
 ## What You'll Learn
 
 By the end of this tutorial, you'll be able to:
@@ -94,7 +96,7 @@ The CLI will ask you several questions. Here's what to answer for this tutorial:
 ? Java package name: com.company.task
 ? Entities (comma-separated PascalCase): Task
 ? Database type: h2
-? Enterprise Framework version: 1.0.0
+? Enterprise Framework version: 2.0.0
 ```
 
 **For features, select these (use spacebar to toggle):**
@@ -209,9 +211,20 @@ public class TaskService extends AbstractEnterpriseService<Task, Long> {
 
     private final TaskRepository taskRepository;
 
-    public TaskService(TaskRepository taskRepository) {
-        super(taskRepository);
+    public TaskService(
+        TaskRepository taskRepository,
+        BusinessValidator<Task> validator,
+        ApplicationEventPublisher eventPublisher
+    ) {
+        super(taskRepository, validator, eventPublisher);
         this.taskRepository = taskRepository;
+    }
+
+    @Override
+    protected void mergeForUpdate(Task existing, Task updates) {
+        existing.setTitle(updates.getTitle());
+        existing.setDescription(updates.getDescription());
+        existing.setStatus(updates.getStatus());
     }
 
     // Your business logic methods go here
@@ -222,11 +235,13 @@ public class TaskService extends AbstractEnterpriseService<Task, Long> {
 }
 ```
 
-**Notice:**
-- Extends `AbstractEnterpriseService`
+**Notice (v2.0):**
+- Extends `AbstractEnterpriseService` with generic type `<Task, Long>`
+- Constructor requires: **repository**, **validator**, and **eventPublisher**
+- Must implement `mergeForUpdate()` for update logic
 - Transaction management handled automatically
-- Validation hooks available
-- Event publishing built-in
+- Validation with `ValidationResult` (errors + warnings)
+- Event publishing with typed events built-in
 
 ### 3.4 The Task Controller
 
@@ -235,33 +250,134 @@ Open `src/main/java/com/company/task/controller/TaskController.java`:
 ```java
 @RestController
 @RequestMapping("/api/v1/tasks")
-public class TaskController extends AbstractEnterpriseController<Task, Long> {
+public class TaskController extends AbstractEnterpriseController<
+        Task, Long, TaskRequest, TaskResponse> {
 
     private final TaskService taskService;
 
-    public TaskController(TaskService taskService) {
-        super(taskService);
+    public TaskController(
+        TaskService taskService,
+        TaskMapper mapper
+    ) {
+        super(taskService, mapper);
         this.taskService = taskService;
     }
 
-    // Basic CRUD endpoints inherited
-    // Add custom endpoints here
+    @Override
+    protected Specification<Task> buildSpecification(Map<String, String> criteria) {
+        SpecificationBuilder<Task> builder = new SpecificationBuilder<>();
 
+        if (criteria.containsKey("status")) {
+            builder.withEqual("status", criteria.get("status"));
+        }
+
+        return builder.build();
+    }
+
+    // Custom endpoint
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<Task>> findByStatus(@PathVariable TaskStatus status) {
-        return ResponseEntity.ok(taskService.findByStatus(status));
+    public ResponseEntity<ApiResponse<List<TaskResponse>>> findByStatus(
+        @PathVariable TaskStatus status
+    ) {
+        List<Task> tasks = taskService.findByStatus(status);
+        List<TaskResponse> responses = tasks.stream()
+            .map(mapper::toResponse)
+            .collect(Collectors.toList());
+
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 }
 ```
 
-**Notice:**
-- Extends `AbstractEnterpriseController`
+**Notice (v2.0):**
+- Extends `AbstractEnterpriseController` with **4 generic parameters**: Entity, ID, Request DTO, Response DTO
+- Constructor requires: **service** and **mapper** (for Entity ↔ DTO conversion)
+- Must implement `buildSpecification()` for search functionality
+- All responses wrapped in `ApiResponse<T>` with success/error structure
 - Standard CRUD endpoints inherited:
-  - `GET /api/v1/tasks` - List all
+  - `POST /api/v1/tasks` - Create (returns HTTP 201)
   - `GET /api/v1/tasks/{id}` - Get by ID
-  - `POST /api/v1/tasks` - Create
+  - `GET /api/v1/tasks` - List all with pagination
   - `PUT /api/v1/tasks/{id}` - Update
-  - `DELETE /api/v1/tasks/{id}` - Soft delete
+  - `PATCH /api/v1/tasks/{id}` - Partial update
+  - `DELETE /api/v1/tasks/{id}` - Delete (soft or hard)
+  - `GET /api/v1/tasks/search` - Search with criteria
+
+### 3.5 DTOs and Mapper (New in v2.0)
+
+The v2.0 framework uses **DTOs** (Data Transfer Objects) to separate API layer from domain layer.
+
+**TaskRequest.java** - For incoming data:
+```java
+public record TaskRequest(
+    String title,
+    String description,
+    TaskStatus status,
+    LocalDate dueDate,
+    Priority priority
+) {}
+```
+
+**TaskResponse.java** - For outgoing data:
+```java
+public record TaskResponse(
+    Long id,
+    String title,
+    String description,
+    TaskStatus status,
+    LocalDate dueDate,
+    Priority priority,
+    LocalDateTime createdAt,
+    String createdBy
+) {}
+```
+
+**TaskMapper.java** - Converts between Entity and DTOs:
+```java
+@Component
+public class TaskMapper implements EntityMapper<Task, TaskRequest, TaskResponse> {
+
+    @Override
+    public Task toEntity(TaskRequest request) {
+        Task task = new Task();
+        task.setTitle(request.title());
+        task.setDescription(request.description());
+        task.setStatus(request.status());
+        task.setDueDate(request.dueDate());
+        task.setPriority(request.priority());
+        return task;
+    }
+
+    @Override
+    public TaskResponse toResponse(Task entity) {
+        return new TaskResponse(
+            entity.getId(),
+            entity.getTitle(),
+            entity.getDescription(),
+            entity.getStatus(),
+            entity.getDueDate(),
+            entity.getPriority(),
+            entity.getCreatedAt(),
+            entity.getCreatedBy()
+        );
+    }
+
+    @Override
+    public void updateEntity(Task entity, TaskRequest request) {
+        entity.setTitle(request.title());
+        entity.setDescription(request.description());
+        entity.setStatus(request.status());
+        entity.setDueDate(request.dueDate());
+        entity.setPriority(request.priority());
+    }
+}
+```
+
+**Why DTOs?**
+- ✅ **Security** - Don't expose internal entity structure
+- ✅ **Flexibility** - API can evolve independently from database
+- ✅ **Validation** - Validate input separately from business logic
+- ✅ **Documentation** - Clear API contracts
 
 ---
 

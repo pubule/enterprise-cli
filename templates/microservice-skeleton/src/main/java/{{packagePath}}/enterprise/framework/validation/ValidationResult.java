@@ -5,11 +5,11 @@
 package {{packageName}}.enterprise.framework.validation;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
- * Result of a validation operation.
+ * Result of validation operations.
+ * Contains validation errors and warnings.
  *
  * @author Enterprise CLI
  * @version {{frameworkVersion}}
@@ -17,37 +17,131 @@ import java.util.List;
  */
 public class ValidationResult {
 
-    private final List<String> errors;
+    private final List<ValidationError> errors;
+    private final List<ValidationWarning> warnings;
 
-    private ValidationResult(List<String> errors) {
-        this.errors = new ArrayList<>(errors);
+    public ValidationResult() {
+        this.errors = new ArrayList<>();
+        this.warnings = new ArrayList<>();
     }
 
-    public static ValidationResult success() {
-        return new ValidationResult(Collections.emptyList());
+    /**
+     * Adds a validation error.
+     *
+     * @param field the field name
+     * @param message the error message
+     * @param code the error code
+     */
+    public void addError(String field, String message, String code) {
+        errors.add(new ValidationError(field, message, code));
     }
 
-    public static ValidationResult failure(String error) {
-        return new ValidationResult(Collections.singletonList(error));
+    /**
+     * Adds a validation error without code.
+     *
+     * @param field the field name
+     * @param message the error message
+     */
+    public void addError(String field, String message) {
+        errors.add(new ValidationError(field, message, null));
     }
 
-    public static ValidationResult failure(List<String> errors) {
-        return new ValidationResult(errors);
+    /**
+     * Adds a validation warning.
+     *
+     * @param field the field name
+     * @param message the warning message
+     */
+    public void addWarning(String field, String message) {
+        warnings.add(new ValidationWarning(field, message));
     }
 
+    /**
+     * Checks if validation passed (no errors).
+     *
+     * @return true if valid (no errors)
+     */
     public boolean isValid() {
         return errors.isEmpty();
     }
 
-    public List<String> getErrors() {
-        return Collections.unmodifiableList(errors);
+    /**
+     * Checks if there are warnings.
+     *
+     * @return true if warnings exist
+     */
+    public boolean hasWarnings() {
+        return !warnings.isEmpty();
     }
 
-    public void addError(String error) {
-        errors.add(error);
+    /**
+     * Gets all errors as formatted strings.
+     *
+     * @return list of error messages
+     */
+    public List<String> getErrorMessages() {
+        List<String> messages = new ArrayList<>();
+        for (ValidationError error : errors) {
+            messages.add(error.getField() + ": " + error.getMessage());
+        }
+        return messages;
     }
 
-    public void addErrors(List<String> newErrors) {
-        errors.addAll(newErrors);
+    // Getters
+
+    public List<ValidationError> getErrors() {
+        return errors;
+    }
+
+    public List<ValidationWarning> getWarnings() {
+        return warnings;
+    }
+
+    /**
+     * Validation error with field, message, and optional code.
+     */
+    public static class ValidationError {
+        private final String field;
+        private final String message;
+        private final String code;
+
+        public ValidationError(String field, String message, String code) {
+            this.field = field;
+            this.message = message;
+            this.code = code;
+        }
+
+        public String getField() {
+            return field;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public String getCode() {
+            return code;
+        }
+    }
+
+    /**
+     * Validation warning with field and message.
+     */
+    public static class ValidationWarning {
+        private final String field;
+        private final String message;
+
+        public ValidationWarning(String field, String message) {
+            this.field = field;
+            this.message = message;
+        }
+
+        public String getField() {
+            return field;
+        }
+
+        public String getMessage() {
+            return message;
+        }
     }
 }
