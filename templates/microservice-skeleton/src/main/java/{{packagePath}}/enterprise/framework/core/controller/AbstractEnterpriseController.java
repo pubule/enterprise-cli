@@ -4,6 +4,8 @@
  */
 package {{packageName}}.enterprise.framework.core.controller;
 
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants;
+import {{packageName}}.enterprise.framework.constants.MessageConstants;
 import {{packageName}}.enterprise.framework.core.entity.AbstractAuditableEntity;
 import {{packageName}}.enterprise.framework.core.service.AbstractEnterpriseService;
 import {{packageName}}.enterprise.framework.dto.ApiResponse;
@@ -70,7 +72,7 @@ public abstract class AbstractEnterpriseController<
         log.info("Entity created with id: {}", created.getId());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response, "Entity created successfully"));
+                .body(ApiResponse.success(response, MessageConstants.Success.ENTITY_CREATED));
     }
 
     /**
@@ -100,15 +102,15 @@ public abstract class AbstractEnterpriseController<
      */
     @GetMapping
     public ResponseEntity<ApiResponse<PagedResponse<RES>>> findAll(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) {
+            @RequestParam(defaultValue = "" + FrameworkConstants.Pagination.DEFAULT_PAGE) int page,
+            @RequestParam(defaultValue = "" + FrameworkConstants.Pagination.DEFAULT_SIZE) int size,
+            @RequestParam(defaultValue = FrameworkConstants.Pagination.DEFAULT_SORT_BY) String sortBy,
+            @RequestParam(defaultValue = FrameworkConstants.Pagination.SORT_ASC) String sortDir) {
 
         log.debug("Finding all entities - page: {}, size: {}, sortBy: {}, sortDir: {}",
                 page, size, sortBy, sortDir);
 
-        Sort sort = sortDir.equalsIgnoreCase("desc")
+        Sort sort = sortDir.equalsIgnoreCase(FrameworkConstants.Pagination.SORT_DESC)
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
 
@@ -140,7 +142,7 @@ public abstract class AbstractEnterpriseController<
         RES response = mapper.toResponse(updated);
 
         log.info("Entity updated with id: {}", id);
-        return ResponseEntity.ok(ApiResponse.success(response, "Entity updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(response, MessageConstants.Success.ENTITY_UPDATED));
     }
 
     /**
@@ -163,7 +165,7 @@ public abstract class AbstractEnterpriseController<
         RES response = mapper.toResponse(updated);
 
         log.info("Entity partially updated with id: {}", id);
-        return ResponseEntity.ok(ApiResponse.success(response, "Entity updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(response, MessageConstants.Success.ENTITY_UPDATED));
     }
 
     /**
@@ -181,7 +183,7 @@ public abstract class AbstractEnterpriseController<
         log.info("Entity deleted with id: {}", id);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
-                .body(ApiResponse.success(null, "Entity deleted successfully"));
+                .body(ApiResponse.success(null, MessageConstants.Success.ENTITY_DELETED));
     }
 
     /**
@@ -197,10 +199,10 @@ public abstract class AbstractEnterpriseController<
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<PagedResponse<RES>>> search(
             @RequestParam Map<String, String> criteria,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) {
+            @RequestParam(defaultValue = "" + FrameworkConstants.Pagination.DEFAULT_PAGE) int page,
+            @RequestParam(defaultValue = "" + FrameworkConstants.Pagination.DEFAULT_SIZE) int size,
+            @RequestParam(defaultValue = FrameworkConstants.Pagination.DEFAULT_SORT_BY) String sortBy,
+            @RequestParam(defaultValue = FrameworkConstants.Pagination.SORT_ASC) String sortDir) {
 
         log.debug("Searching entities with criteria: {}", criteria);
 
@@ -212,7 +214,7 @@ public abstract class AbstractEnterpriseController<
 
         Specification<T> spec = buildSpecification(criteria);
 
-        Sort sort = sortDir.equalsIgnoreCase("desc")
+        Sort sort = sortDir.equalsIgnoreCase(FrameworkConstants.Pagination.SORT_DESC)
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
 
@@ -269,6 +271,6 @@ public abstract class AbstractEnterpriseController<
      * @return the entity name
      */
     protected String getEntityName() {
-        return "Entity";
+        return FrameworkConstants.EntityDefaults.ENTITY_NAME;
     }
 }

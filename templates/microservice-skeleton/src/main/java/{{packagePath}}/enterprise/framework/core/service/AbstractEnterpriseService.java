@@ -4,6 +4,7 @@
  */
 package {{packageName}}.enterprise.framework.core.service;
 
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants;
 import {{packageName}}.enterprise.framework.core.entity.AbstractAuditableEntity;
 import {{packageName}}.enterprise.framework.core.entity.SoftDeletable;
 import {{packageName}}.enterprise.framework.core.repository.AbstractEnterpriseRepository;
@@ -245,7 +246,7 @@ public abstract class AbstractEnterpriseService<T extends AbstractAuditableEntit
      * @return the entity name
      */
     protected String getEntityName() {
-        return "Entity";
+        return FrameworkConstants.EntityDefaults.ENTITY_NAME;
     }
 
     /**

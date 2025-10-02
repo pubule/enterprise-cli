@@ -4,6 +4,8 @@
  */
 package {{packageName}}.enterprise.framework.exception;
 
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants;
+import {{packageName}}.enterprise.framework.constants.MessageConstants;
 import {{packageName}}.enterprise.framework.dto.ApiResponse;
 import {{packageName}}.enterprise.framework.dto.ErrorDetails;
 import {{packageName}}.enterprise.framework.validation.ValidationResult;
@@ -81,7 +83,9 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException ex, WebRequest request) {
         log.warn("Method argument validation failed: {}", ex.getMessage());
 
-        ErrorDetails errorDetails = new ErrorDetails("VALIDATION_ERROR", "Validation failed");
+        ErrorDetails errorDetails = new ErrorDetails(
+                FrameworkConstants.ErrorCodes.VALIDATION_ERROR,
+                MessageConstants.Error.VALIDATION_FAILED);
 
         // Add all field errors
         ex.getBindingResult().getFieldErrors().forEach(error ->
@@ -123,7 +127,7 @@ public class GlobalExceptionHandler {
             IllegalArgumentException ex, WebRequest request) {
         log.warn("Invalid argument: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(ex.getMessage(), "INVALID_ARGUMENT"));
+                .body(ApiResponse.error(ex.getMessage(), FrameworkConstants.ErrorCodes.INVALID_ARGUMENT));
     }
 
     /**
@@ -135,8 +139,8 @@ public class GlobalExceptionHandler {
         log.error("Unexpected error", ex);
 
         ApiResponse<Void> response = ApiResponse.error(
-            "An unexpected error occurred. Please contact support if the problem persists.",
-            "INTERNAL_ERROR"
+            MessageConstants.Error.UNEXPECTED_ERROR,
+            FrameworkConstants.ErrorCodes.INTERNAL_ERROR
         );
 
         // In development, include exception class name

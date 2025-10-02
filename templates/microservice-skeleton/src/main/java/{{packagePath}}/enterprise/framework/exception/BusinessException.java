@@ -4,6 +4,8 @@
  */
 package {{packageName}}.enterprise.framework.exception;
 
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,7 +27,7 @@ public class BusinessException extends RuntimeException {
 
     public BusinessException(String message) {
         super(message);
-        this.errorCode = "BUSINESS_ERROR";
+        this.errorCode = FrameworkConstants.ErrorCodes.BUSINESS_ERROR;
         this.details = new HashMap<>();
     }
 
@@ -37,7 +39,7 @@ public class BusinessException extends RuntimeException {
 
     public BusinessException(String message, Throwable cause) {
         super(message, cause);
-        this.errorCode = "BUSINESS_ERROR";
+        this.errorCode = FrameworkConstants.ErrorCodes.BUSINESS_ERROR;
         this.details = new HashMap<>();
     }
 
