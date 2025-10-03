@@ -19,6 +19,7 @@ module.exports = {
   // TIMEOUTS (milliseconds)
   // ═══════════════════════════════════════════════════════
   TIMEOUTS: {
+    POLL_INTERVAL: 500,    // 500ms for polling operations
     SHORT: 5000,           // 5 seconds
     DEFAULT: 30000,        // 30 seconds
     LONG: 60000,           // 1 minute
@@ -94,7 +95,23 @@ module.exports = {
     DOCKERFILE: 'Dockerfile',
     GITIGNORE: '.gitignore',
     README: 'README.md',
-    ENTERPRISERC: '.enterpriserc'
+    ENTERPRISERC: '.enterpriserc',
+    SPRING_BOOT_LOG: 'spring-boot.log',
+    APPLICATION_LOG: 'application.log',
+    FRONTEND_LOG: 'frontend.log'
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // DIRECTORIES
+  // ═══════════════════════════════════════════════════════
+  DIRECTORIES: {
+    TARGET: 'target',
+    LOGS: 'logs',
+    BUILD: 'build',
+    DIST: 'dist',
+    NODE_MODULES: 'node_modules',
+    SRC: 'src',
+    TEST: 'test'
   },
 
   // ═══════════════════════════════════════════════════════
@@ -182,6 +199,18 @@ module.exports = {
   },
 
   // ═══════════════════════════════════════════════════════
+  // NODE ENVIRONMENTS
+  // ═══════════════════════════════════════════════════════
+  ENVIRONMENTS: {
+    DEVELOPMENT: 'development',
+    PRODUCTION: 'production',
+    TEST: 'test',
+    // Aliases for short forms
+    DEV: 'dev',
+    PROD: 'prod'
+  },
+
+  // ═══════════════════════════════════════════════════════
   // NPM SCRIPT NAMES
   // ═══════════════════════════════════════════════════════
   NPM_SCRIPTS: {
@@ -189,6 +218,17 @@ module.exports = {
     DEV: 'dev',
     BUILD: 'build',
     TEST: 'test'
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // REGEX PATTERNS FOR VALIDATION
+  // ═══════════════════════════════════════════════════════
+  REGEX_PATTERNS: {
+    KEBAB_CASE: /^[a-z0-9]+(-[a-z0-9]+)*$/,
+    JAVA_PACKAGE_PART: /^[a-z_][a-z0-9_]*$/i,
+    JAVA_IDENTIFIER: /^[a-zA-Z_][a-zA-Z0-9_]*$/,
+    JAVA_CLASS_NAME: /^[A-Z][a-zA-Z0-9]*$/,
+    DOMAIN_NAME: /^[a-z][a-z0-9]*$/
   },
 
   // ═══════════════════════════════════════════════════════

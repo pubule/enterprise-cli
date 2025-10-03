@@ -4,6 +4,7 @@
  */
 package {{packageName}}.dto;
 
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants.ValidationLimits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -42,14 +43,16 @@ public class {{domainTitleCase}}Request {
      * Required, 1-100 characters.
      */
     @NotBlank(message = "Name is required")
-    @Size(min = 1, max = 100, message = "Name must be between 1 and 100 characters")
+    @Size(min = ValidationLimits.NAME_MIN_LENGTH, max = ValidationLimits.NAME_MAX_LENGTH,
+          message = "Name must be between " + ValidationLimits.NAME_MIN_LENGTH + " and " + ValidationLimits.NAME_MAX_LENGTH + " characters")
     private String name;
 
     /**
      * Description of the {{domain}}.
      * Optional, max 500 characters.
      */
-    @Size(max = 500, message = "Description must not exceed 500 characters")
+    @Size(max = ValidationLimits.DESCRIPTION_MAX_LENGTH,
+          message = "Description must not exceed " + ValidationLimits.DESCRIPTION_MAX_LENGTH + " characters")
     private String description;
 
     /**
@@ -57,6 +60,7 @@ public class {{domainTitleCase}}Request {
      * Optional, defaults to ACTIVE.
      * Valid values: ACTIVE, INACTIVE, PENDING
      */
-    @Size(max = 20, message = "Status must not exceed 20 characters")
+    @Size(max = ValidationLimits.STATUS_MAX_LENGTH,
+          message = "Status must not exceed " + ValidationLimits.STATUS_MAX_LENGTH + " characters")
     private String status;
 }

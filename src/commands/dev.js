@@ -15,7 +15,8 @@ const {
   PROFILES,
   EXIT_CODES,
   SYMBOLS,
-  MESSAGES
+  MESSAGES,
+  TIMEOUTS
 } = require('../constants');
 
 // Directory for storing CLI state
@@ -631,7 +632,7 @@ async function stopDevServers(options = {}) {
         // Wait up to 5 seconds for graceful shutdown
         let graceful = false;
         for (let i = 0; i < 10; i++) {
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, TIMEOUTS.POLL_INTERVAL));
           if (!isProcessRunning(info.pid)) {
             graceful = true;
             break;

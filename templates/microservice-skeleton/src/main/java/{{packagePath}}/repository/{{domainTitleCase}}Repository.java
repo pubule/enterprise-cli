@@ -5,6 +5,7 @@
 package {{packageName}}.repository;
 
 import {{packageName}}.entity.{{domainTitleCase}};
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants.EntityStatus;
 import {{packageName}}.enterprise.framework.core.repository.AbstractEnterpriseRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -109,9 +110,19 @@ public interface {{domainTitleCase}}Repository extends AbstractEnterpriseReposit
 
     /**
      * Find all active {{domain}}s (non-deleted, status = ACTIVE).
+     * Uses EntityStatus.ACTIVE constant.
+     *
+     * @return list of active {{domain}}s ordered by creation date descending
+     */
+    @Query("SELECT t FROM {{domainTitleCase}} t WHERE t.status = :status AND t.deleted = false ORDER BY t.createdAt DESC")
+    List<{{domainTitleCase}}> findByStatusOrderByCreatedAtDesc(@Param("status") String status);
+
+    /**
+     * Find all active {{domain}}s (convenience method using EntityStatus.ACTIVE).
      *
      * @return list of active {{domain}}s
      */
-    @Query("SELECT t FROM {{domainTitleCase}} t WHERE t.status = 'ACTIVE' AND t.deleted = false ORDER BY t.createdAt DESC")
-    List<{{domainTitleCase}}> findAllActive();
+    default List<{{domainTitleCase}}> findAllActive() {
+        return findByStatusOrderByCreatedAtDesc(EntityStatus.ACTIVE);
+    }
 }

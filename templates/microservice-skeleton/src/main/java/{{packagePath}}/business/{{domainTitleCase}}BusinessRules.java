@@ -7,6 +7,7 @@ package {{packageName}}.business;
 import {{packageName}}.entity.{{domainTitleCase}};
 import {{packageName}}.repository.{{domainTitleCase}}Repository;
 import {{packageName}}.enterprise.framework.annotation.BusinessRule;
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants.EntityStatus;
 import {{packageName}}.enterprise.framework.validation.RuleContext;
 import {{packageName}}.enterprise.framework.validation.RuleResult;
 import org.springframework.stereotype.Component;
@@ -153,7 +154,7 @@ public class {{domainTitleCase}}BusinessRules implements {{packageName}}.enterpr
                 String newStatus = entity.getStatus();
 
                 // Example: Cannot go from PENDING to INACTIVE directly
-                if ("PENDING".equals(oldStatus) && "INACTIVE".equals(newStatus)) {
+                if (EntityStatus.PENDING.equals(oldStatus) && EntityStatus.INACTIVE.equals(newStatus)) {
                     return RuleResult.fail(
                             getRuleName(),
                             "Cannot transition from PENDING to INACTIVE. Must go through ACTIVE first.",
@@ -200,7 +201,7 @@ public class {{domainTitleCase}}BusinessRules implements {{packageName}}.enterpr
     private RuleResult checkBusinessConstraints({{domainTitleCase}} entity, RuleContext context) {
         // Example: Cannot create more than 1000 active {{domain}}s
         if (context.getOperationType() == {{packageName}}.enterprise.framework.validation.ValidationContext.OperationType.CREATE) {
-            long activeCount = {{domain}}Repository.countByStatusAndDeletedFalse("ACTIVE");
+            long activeCount = {{domain}}Repository.countByStatusAndDeletedFalse(EntityStatus.ACTIVE);
 
             if (activeCount >= 1000) {
                 return RuleResult.fail(
@@ -220,7 +221,7 @@ public class {{domainTitleCase}}BusinessRules implements {{packageName}}.enterpr
 
         // Example: Cannot delete if entity has specific status
         if (context.getOperationType() == {{packageName}}.enterprise.framework.validation.ValidationContext.OperationType.DELETE) {
-            if ("PENDING".equals(entity.getStatus())) {
+            if (EntityStatus.PENDING.equals(entity.getStatus())) {
                 return RuleResult.warning(
                         getRuleName(),
                         "Deleting a {{domain}} with PENDING status. Consider completing or canceling it first."

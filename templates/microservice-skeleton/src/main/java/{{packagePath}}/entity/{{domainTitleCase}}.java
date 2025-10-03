@@ -5,6 +5,8 @@
 package {{packageName}}.entity;
 
 import {{packageName}}.enterprise.framework.annotation.EnterpriseEntity;
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants.EntityStatus;
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants.ValidationLimits;
 import {{packageName}}.enterprise.framework.core.entity.AbstractAuditableEntity;
 import {{packageName}}.enterprise.framework.core.entity.SoftDeletable;
 import jakarta.persistence.*;
@@ -59,22 +61,22 @@ public class {{domainTitleCase}} extends AbstractAuditableEntity<Long> implement
      * Name of the {{domain}}.
      * Required, max 100 characters.
      */
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = ValidationLimits.NAME_MAX_LENGTH)
     private String name;
 
     /**
      * Description of the {{domain}}.
      * Optional, max 500 characters.
      */
-    @Column(length = 500)
+    @Column(length = ValidationLimits.DESCRIPTION_MAX_LENGTH)
     private String description;
 
     /**
      * Status of the {{domain}}.
      * Example values: ACTIVE, INACTIVE, PENDING
      */
-    @Column(nullable = false, length = 20)
-    private String status = "ACTIVE";
+    @Column(nullable = false, length = ValidationLimits.STATUS_MAX_LENGTH)
+    private String status = EntityStatus.ACTIVE;
 
     // ═══════════════════════════════════════════════════════
     // SOFT DELETE FIELDS (required by SoftDeletable interface)
@@ -98,7 +100,7 @@ public class {{domainTitleCase}} extends AbstractAuditableEntity<Long> implement
      * Changes status to ACTIVE.
      */
     public void activate() {
-        this.status = "ACTIVE";
+        this.status = EntityStatus.ACTIVE;
     }
 
     /**
@@ -106,7 +108,7 @@ public class {{domainTitleCase}} extends AbstractAuditableEntity<Long> implement
      * Changes status to INACTIVE.
      */
     public void deactivate() {
-        this.status = "INACTIVE";
+        this.status = EntityStatus.INACTIVE;
     }
 
     /**
@@ -115,7 +117,7 @@ public class {{domainTitleCase}} extends AbstractAuditableEntity<Long> implement
      * @return true if status is ACTIVE
      */
     public boolean isActive() {
-        return "ACTIVE".equals(this.status);
+        return EntityStatus.ACTIVE.equals(this.status);
     }
 
     /**
@@ -124,7 +126,7 @@ public class {{domainTitleCase}} extends AbstractAuditableEntity<Long> implement
      * @return true if status is INACTIVE
      */
     public boolean isInactive() {
-        return "INACTIVE".equals(this.status);
+        return EntityStatus.INACTIVE.equals(this.status);
     }
 
     // ═══════════════════════════════════════════════════════

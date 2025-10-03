@@ -16,7 +16,8 @@ const {
   PORTS,
   EXIT_CODES,
   SYMBOLS,
-  MESSAGES
+  MESSAGES,
+  REGEX_PATTERNS
 } = require('../constants');
 
 // ========================================
@@ -191,7 +192,7 @@ function validateInputs(answers) {
   }
 
   // Validate domain
-  if (!answers.domain || !/^[a-z][a-z0-9]*$/.test(answers.domain)) {
+  if (!answers.domain || !REGEX_PATTERNS.DOMAIN_NAME.test(answers.domain)) {
     errors.push('Domain must be lowercase alphanumeric (e.g., "user", "order")');
   }
 
@@ -343,7 +344,7 @@ async function getInteractiveAnswers(serviceName, options) {
       },
       validate: (input) => {
         if (!input) return 'Domain is required';
-        if (!/^[a-z][a-z0-9]*$/.test(input)) {
+        if (!REGEX_PATTERNS.DOMAIN_NAME.test(input)) {
           return 'Domain must be lowercase alphanumeric (e.g., "user", "order")';
         }
         return true;

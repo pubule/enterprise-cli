@@ -3,7 +3,7 @@
  * Provides validation and string transformation functions for enterprise code generation
  */
 
-const { LIMITS } = require('../constants');
+const { LIMITS, REGEX_PATTERNS } = require('../constants');
 
 // Java reserved keywords for validation
 const JAVA_KEYWORDS = new Set([
@@ -37,8 +37,7 @@ function isValidServiceName(name) {
 
   // Check kebab-case format: lowercase letters, numbers, hyphens
   // Must start and end with alphanumeric, no consecutive hyphens
-  const kebabCaseRegex = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-  return kebabCaseRegex.test(name);
+  return REGEX_PATTERNS.KEBAB_CASE.test(name);
 }
 
 /**
@@ -75,7 +74,7 @@ function isValidJavaPackage(pkg) {
     }
 
     // Check if it's a valid Java identifier (lowercase convention)
-    if (!/^[a-z_][a-z0-9_]*$/i.test(part)) {
+    if (!REGEX_PATTERNS.JAVA_PACKAGE_PART.test(part)) {
       return false;
     }
 
@@ -104,7 +103,7 @@ function isValidJavaIdentifier(id) {
   }
 
   // Rest must be alphanumeric or underscore
-  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(id)) {
+  if (!REGEX_PATTERNS.JAVA_IDENTIFIER.test(id)) {
     return false;
   }
 
@@ -132,7 +131,7 @@ function isValidJavaClassName(name) {
   }
 
   // Must be alphanumeric only (no underscores for class names)
-  if (!/^[A-Z][a-zA-Z0-9]*$/.test(name)) {
+  if (!REGEX_PATTERNS.JAVA_CLASS_NAME.test(name)) {
     return false;
   }
 

@@ -7,6 +7,7 @@ package {{packageName}}.controller;
 import {{packageName}}.dto.{{domainTitleCase}}Request;
 import {{packageName}}.dto.{{domainTitleCase}}Response;
 import {{packageName}}.entity.{{domainTitleCase}};
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants.EntityStatus;
 import {{packageName}}.mapper.{{domainTitleCase}}Mapper;
 import {{packageName}}.service.{{domainTitleCase}}Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -66,20 +67,20 @@ class {{domainTitleCase}}ControllerTest {
         sample{{domainTitleCase}}.setId(1L);
         sample{{domainTitleCase}}.setName("Sample {{domainTitleCase}}");
         sample{{domainTitleCase}}.setDescription("Sample description");
-        sample{{domainTitleCase}}.setStatus("ACTIVE");
+        sample{{domainTitleCase}}.setStatus(EntityStatus.ACTIVE);
 
         // Setup request DTO
         sample{{domainTitleCase}}Request = new {{domainTitleCase}}Request();
         sample{{domainTitleCase}}Request.setName("Sample {{domainTitleCase}}");
         sample{{domainTitleCase}}Request.setDescription("Sample description");
-        sample{{domainTitleCase}}Request.setStatus("ACTIVE");
+        sample{{domainTitleCase}}Request.setStatus(EntityStatus.ACTIVE);
 
         // Setup response DTO
         sample{{domainTitleCase}}Response = new {{domainTitleCase}}Response();
         sample{{domainTitleCase}}Response.setId(1L);
         sample{{domainTitleCase}}Response.setName("Sample {{domainTitleCase}}");
         sample{{domainTitleCase}}Response.setDescription("Sample description");
-        sample{{domainTitleCase}}Response.setStatus("ACTIVE");
+        sample{{domainTitleCase}}Response.setStatus(EntityStatus.ACTIVE);
     }
 
     // ═══════════════════════════════════════════════════════
@@ -101,7 +102,7 @@ class {{domainTitleCase}}ControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.name").value("Sample {{domainTitleCase}}"))
-                .andExpect(jsonPath("$.data.status").value("ACTIVE"));
+                .andExpect(jsonPath("$.data.status").value(EntityStatus.ACTIVE));
 
         verify({{domain}}Service, times(1)).create(any({{domainTitleCase}}.class));
     }
@@ -222,7 +223,7 @@ class {{domainTitleCase}}ControllerTest {
         mockMvc.perform(post("/api/v1/{{domain}}s/1/activate"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.status").value("ACTIVE"));
+                .andExpect(jsonPath("$.data.status").value(EntityStatus.ACTIVE));
 
         verify({{domain}}Service, times(1)).activate(1L);
     }
@@ -231,7 +232,7 @@ class {{domainTitleCase}}ControllerTest {
     @DisplayName("POST /api/v1/{{domain}}s/{id}/deactivate - Should deactivate {{domain}}")
     void testDeactivate_Success() throws Exception {
         // Given
-        sample{{domainTitleCase}}Response.setStatus("INACTIVE");
+        sample{{domainTitleCase}}Response.setStatus(EntityStatus.INACTIVE);
         when({{domain}}Service.deactivate(1L)).thenReturn(sample{{domainTitleCase}});
         when(mapper.toResponse(any({{domainTitleCase}}.class))).thenReturn(sample{{domainTitleCase}}Response);
 
@@ -239,7 +240,7 @@ class {{domainTitleCase}}ControllerTest {
         mockMvc.perform(post("/api/v1/{{domain}}s/1/deactivate"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.status").value("INACTIVE"));
+                .andExpect(jsonPath("$.data.status").value(EntityStatus.INACTIVE));
 
         verify({{domain}}Service, times(1)).deactivate(1L);
     }
@@ -249,7 +250,7 @@ class {{domainTitleCase}}ControllerTest {
     void testFindByStatus_Success() throws Exception {
         // Given
         List<{{domainTitleCase}}> activeList = Arrays.asList(sample{{domainTitleCase}}, new {{domainTitleCase}}());
-        when({{domain}}Service.findByStatus("ACTIVE")).thenReturn(activeList);
+        when({{domain}}Service.findByStatus(EntityStatus.ACTIVE)).thenReturn(activeList);
         when(mapper.toResponse(any({{domainTitleCase}}.class))).thenReturn(sample{{domainTitleCase}}Response);
 
         // When/Then
@@ -259,7 +260,7 @@ class {{domainTitleCase}}ControllerTest {
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data", hasSize(2)));
 
-        verify({{domain}}Service, times(1)).findByStatus("ACTIVE");
+        verify({{domain}}Service, times(1)).findByStatus(EntityStatus.ACTIVE);
     }
 
     @Test
@@ -285,7 +286,7 @@ class {{domainTitleCase}}ControllerTest {
     @DisplayName("GET /api/v1/{{domain}}s/count-by-status/{status} - Should count by status")
     void testCountByStatus_Success() throws Exception {
         // Given
-        when({{domain}}Service.countByStatus("ACTIVE")).thenReturn(5L);
+        when({{domain}}Service.countByStatus(EntityStatus.ACTIVE)).thenReturn(5L);
 
         // When/Then
         mockMvc.perform(get("/api/v1/{{domain}}s/count-by-status/ACTIVE"))
@@ -293,6 +294,6 @@ class {{domainTitleCase}}ControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").value(5));
 
-        verify({{domain}}Service, times(1)).countByStatus("ACTIVE");
+        verify({{domain}}Service, times(1)).countByStatus(EntityStatus.ACTIVE);
     }
 }

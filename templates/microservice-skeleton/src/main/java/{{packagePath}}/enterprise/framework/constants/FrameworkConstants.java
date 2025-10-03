@@ -68,6 +68,22 @@ public final class FrameworkConstants {
     }
 
     /**
+     * Common validation limits for entity fields.
+     */
+    public static final class ValidationLimits {
+        public static final int NAME_MIN_LENGTH = 1;
+        public static final int NAME_MAX_LENGTH = 100;
+        public static final int NAME_MIN_LENGTH_STRICT = 3;
+        public static final int DESCRIPTION_MAX_LENGTH = 500;
+        public static final int STATUS_MAX_LENGTH = 20;
+        public static final int USERNAME_MAX_LENGTH = 100;
+        public static final int EMAIL_MAX_LENGTH = 255;
+
+        private ValidationLimits() {
+        }
+    }
+
+    /**
      * Standard field names used across entities.
      */
     public static final class FieldNames {
@@ -102,6 +118,20 @@ public final class FrameworkConstants {
         public static final String OPTIMISTIC_LOCK_FAILURE = "OPTIMISTIC_LOCK_FAILURE";
 
         private ErrorCodes() {
+        }
+    }
+
+    /**
+     * Standard entity status values.
+     */
+    public static final class EntityStatus {
+        public static final String ACTIVE = "ACTIVE";
+        public static final String INACTIVE = "INACTIVE";
+        public static final String PENDING = "PENDING";
+        public static final String ARCHIVED = "ARCHIVED";
+        public static final String DELETED = "DELETED";
+
+        private EntityStatus() {
         }
     }
 

@@ -6,6 +6,8 @@ package {{packageName}}.validation;
 
 import {{packageName}}.entity.{{domainTitleCase}};
 import {{packageName}}.repository.{{domainTitleCase}}Repository;
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants.EntityStatus;
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants.ValidationLimits;
 import {{packageName}}.enterprise.framework.validation.BusinessValidator;
 import {{packageName}}.enterprise.framework.validation.ValidationContext;
 import {{packageName}}.enterprise.framework.validation.ValidationResult;
@@ -42,7 +44,11 @@ import java.util.List;
 @Component
 public class {{domainTitleCase}}Validator implements BusinessValidator<{{domainTitleCase}}> {
 
-    private static final List<String> VALID_STATUSES = Arrays.asList("ACTIVE", "INACTIVE", "PENDING");
+    private static final List<String> VALID_STATUSES = Arrays.asList(
+            EntityStatus.ACTIVE,
+            EntityStatus.INACTIVE,
+            EntityStatus.PENDING
+    );
 
     private final {{domainTitleCase}}Repository {{domain}}Repository;
 
@@ -100,12 +106,12 @@ public class {{domainTitleCase}}Validator implements BusinessValidator<{{domainT
             return;
         }
 
-        if (name.length() < 3) {
-            result.addError("name", "Name must be at least 3 characters long", "{{domain.toUpperCase()}}_NAME_TOO_SHORT");
+        if (name.length() < ValidationLimits.NAME_MIN_LENGTH_STRICT) {
+            result.addError("name", "Name must be at least " + ValidationLimits.NAME_MIN_LENGTH_STRICT + " characters long", "{{domain.toUpperCase()}}_NAME_TOO_SHORT");
         }
 
-        if (name.length() > 100) {
-            result.addError("name", "Name must not exceed 100 characters", "{{domain.toUpperCase()}}_NAME_TOO_LONG");
+        if (name.length() > ValidationLimits.NAME_MAX_LENGTH) {
+            result.addError("name", "Name must not exceed " + ValidationLimits.NAME_MAX_LENGTH + " characters", "{{domain.toUpperCase()}}_NAME_TOO_LONG");
         }
 
         // Example: Forbidden words check
@@ -120,8 +126,8 @@ public class {{domainTitleCase}}Validator implements BusinessValidator<{{domainT
     private void validateDescription({{domainTitleCase}} entity, ValidationContext context, ValidationResult result) {
         String description = entity.getDescription();
 
-        if (description != null && description.length() > 500) {
-            result.addError("description", "Description must not exceed 500 characters", "{{domain.toUpperCase()}}_DESCRIPTION_TOO_LONG");
+        if (description != null && description.length() > ValidationLimits.DESCRIPTION_MAX_LENGTH) {
+            result.addError("description", "Description must not exceed " + ValidationLimits.DESCRIPTION_MAX_LENGTH + " characters", "{{domain.toUpperCase()}}_DESCRIPTION_TOO_LONG");
         }
 
         // Warning if description is missing
@@ -188,7 +194,7 @@ public class {{domainTitleCase}}Validator implements BusinessValidator<{{domainT
      */
     private void validateForCreate({{domainTitleCase}} entity, ValidationResult result) {
         // Example: New entities should start with PENDING status
-        if (!"PENDING".equals(entity.getStatus())) {
+        if (!EntityStatus.PENDING.equals(entity.getStatus())) {
             result.addWarning("status", "New {{domain}}s typically start with PENDING status");
         }
     }
@@ -206,7 +212,7 @@ public class {{domainTitleCase}}Validator implements BusinessValidator<{{domainT
         {{domainTitleCase}} existing = ({{domainTitleCase}}) existingObj;
 
         // Example: Cannot change status from INACTIVE to ACTIVE directly
-        if ("INACTIVE".equals(existing.getStatus()) && "ACTIVE".equals(entity.getStatus())) {
+        if (EntityStatus.INACTIVE.equals(existing.getStatus()) && EntityStatus.ACTIVE.equals(entity.getStatus())) {
             result.addError(
                     "status",
                     "Cannot activate an inactive {{domain}}. Use the activate endpoint instead.",

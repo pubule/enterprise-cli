@@ -7,6 +7,7 @@ package {{packageName}}.service;
 import {{packageName}}.entity.{{domainTitleCase}};
 import {{packageName}}.repository.{{domainTitleCase}}Repository;
 import {{packageName}}.validation.{{domainTitleCase}}Validator;
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants.EntityStatus;
 import {{packageName}}.enterprise.framework.exception.BusinessException;
 import {{packageName}}.enterprise.framework.exception.ResourceNotFoundException;
 import {{packageName}}.enterprise.framework.exception.ValidationException;
@@ -63,7 +64,7 @@ class {{domainTitleCase}}ServiceTest {
         sample{{domainTitleCase}}.setId(1L);
         sample{{domainTitleCase}}.setName("Sample {{domainTitleCase}}");
         sample{{domainTitleCase}}.setDescription("Sample description");
-        sample{{domainTitleCase}}.setStatus("ACTIVE");
+        sample{{domainTitleCase}}.setStatus(EntityStatus.ACTIVE);
     }
 
     // ═══════════════════════════════════════════════════════
@@ -149,7 +150,7 @@ class {{domainTitleCase}}ServiceTest {
         {{domainTitleCase}} updated = new {{domainTitleCase}}();
         updated.setName("Updated Name");
         updated.setDescription("Updated description");
-        updated.setStatus("INACTIVE");
+        updated.setStatus(EntityStatus.INACTIVE);
 
         when({{domain}}Repository.findById(1L)).thenReturn(Optional.of(sample{{domainTitleCase}}));
         when({{domain}}Repository.save(any({{domainTitleCase}}.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -192,7 +193,7 @@ class {{domainTitleCase}}ServiceTest {
     @DisplayName("Should activate {{domain}}")
     void testActivate_Success() {
         // Given
-        sample{{domainTitleCase}}.setStatus("INACTIVE");
+        sample{{domainTitleCase}}.setStatus(EntityStatus.INACTIVE);
         when({{domain}}Repository.findById(1L)).thenReturn(Optional.of(sample{{domainTitleCase}}));
         when({{domain}}Repository.save(any({{domainTitleCase}}.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -201,7 +202,7 @@ class {{domainTitleCase}}ServiceTest {
 
         // Then
         assertThat(activated).isNotNull();
-        assertThat(activated.getStatus()).isEqualTo("ACTIVE");
+        assertThat(activated.getStatus()).isEqualTo(EntityStatus.ACTIVE);
         assertThat(activated.isActive()).isTrue();
         verify({{domain}}Repository, times(1)).save(any({{domainTitleCase}}.class));
     }
@@ -210,7 +211,7 @@ class {{domainTitleCase}}ServiceTest {
     @DisplayName("Should throw exception when activating already active {{domain}}")
     void testActivate_AlreadyActive() {
         // Given
-        sample{{domainTitleCase}}.setStatus("ACTIVE");
+        sample{{domainTitleCase}}.setStatus(EntityStatus.ACTIVE);
         when({{domain}}Repository.findById(1L)).thenReturn(Optional.of(sample{{domainTitleCase}}));
 
         // When/Then
@@ -223,7 +224,7 @@ class {{domainTitleCase}}ServiceTest {
     @DisplayName("Should deactivate {{domain}}")
     void testDeactivate_Success() {
         // Given
-        sample{{domainTitleCase}}.setStatus("ACTIVE");
+        sample{{domainTitleCase}}.setStatus(EntityStatus.ACTIVE);
         when({{domain}}Repository.findById(1L)).thenReturn(Optional.of(sample{{domainTitleCase}}));
         when({{domain}}Repository.save(any({{domainTitleCase}}.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -232,7 +233,7 @@ class {{domainTitleCase}}ServiceTest {
 
         // Then
         assertThat(deactivated).isNotNull();
-        assertThat(deactivated.getStatus()).isEqualTo("INACTIVE");
+        assertThat(deactivated.getStatus()).isEqualTo(EntityStatus.INACTIVE);
         assertThat(deactivated.isInactive()).isTrue();
         verify({{domain}}Repository, times(1)).save(any({{domainTitleCase}}.class));
     }
@@ -241,7 +242,7 @@ class {{domainTitleCase}}ServiceTest {
     @DisplayName("Should throw exception when deactivating already inactive {{domain}}")
     void testDeactivate_AlreadyInactive() {
         // Given
-        sample{{domainTitleCase}}.setStatus("INACTIVE");
+        sample{{domainTitleCase}}.setStatus(EntityStatus.INACTIVE);
         when({{domain}}Repository.findById(1L)).thenReturn(Optional.of(sample{{domainTitleCase}}));
 
         // When/Then
@@ -282,10 +283,10 @@ class {{domainTitleCase}}ServiceTest {
     void testFindByStatus_Success() {
         // Given
         List<{{domainTitleCase}}> activeList = Arrays.asList(sample{{domainTitleCase}}, new {{domainTitleCase}}());
-        when({{domain}}Repository.findByStatusAndDeletedFalse("ACTIVE")).thenReturn(activeList);
+        when({{domain}}Repository.findByStatusAndDeletedFalse(EntityStatus.ACTIVE)).thenReturn(activeList);
 
         // When
-        List<{{domainTitleCase}}> result = {{domain}}Service.findByStatus("ACTIVE");
+        List<{{domainTitleCase}}> result = {{domain}}Service.findByStatus(EntityStatus.ACTIVE);
 
         // Then
         assertThat(result).isNotNull();
@@ -296,10 +297,10 @@ class {{domainTitleCase}}ServiceTest {
     @DisplayName("Should count {{domain}}s by status")
     void testCountByStatus_Success() {
         // Given
-        when({{domain}}Repository.countByStatusAndDeletedFalse("ACTIVE")).thenReturn(5L);
+        when({{domain}}Repository.countByStatusAndDeletedFalse(EntityStatus.ACTIVE)).thenReturn(5L);
 
         // When
-        long count = {{domain}}Service.countByStatus("ACTIVE");
+        long count = {{domain}}Service.countByStatus(EntityStatus.ACTIVE);
 
         // Then
         assertThat(count).isEqualTo(5L);

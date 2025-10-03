@@ -7,6 +7,7 @@ package {{packageName}}.mapper;
 import {{packageName}}.dto.{{domainTitleCase}}Request;
 import {{packageName}}.dto.{{domainTitleCase}}Response;
 import {{packageName}}.entity.{{domainTitleCase}};
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants.EntityStatus;
 import {{packageName}}.enterprise.framework.dto.EntityMapper;
 import org.springframework.stereotype.Component;
 
@@ -63,7 +64,7 @@ public class {{domainTitleCase}}Mapper implements EntityMapper<{{domainTitleCase
         if (request.getStatus() != null && !request.getStatus().isEmpty()) {
             entity.setStatus(request.getStatus());
         } else {
-            entity.setStatus("ACTIVE"); // Default status
+            entity.setStatus(EntityStatus.ACTIVE); // Default status
         }
 
         // DO NOT set:
