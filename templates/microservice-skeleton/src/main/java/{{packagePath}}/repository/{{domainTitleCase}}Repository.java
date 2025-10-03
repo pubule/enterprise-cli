@@ -6,6 +6,7 @@ package {{packageName}}.repository;
 
 import {{packageName}}.entity.{{domainTitleCase}};
 import {{packageName}}.enterprise.framework.constants.FrameworkConstants.EntityStatus;
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants.QueryParams;
 import {{packageName}}.enterprise.framework.core.repository.AbstractEnterpriseRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -98,7 +99,7 @@ public interface {{domainTitleCase}}Repository extends AbstractEnterpriseReposit
      * @return list of matching {{domain}}s
      */
     @Query("SELECT t FROM {{domainTitleCase}} t WHERE LOWER(t.name) LIKE LOWER(CONCAT('%', :namePattern, '%')) AND t.deleted = false")
-    List<{{domainTitleCase}}> searchByName(@Param("namePattern") String namePattern);
+    List<{{domainTitleCase}}> searchByName(@Param(QueryParams.NAME_PATTERN) String namePattern);
 
     /**
      * Count {{domain}}s by status.
@@ -115,7 +116,7 @@ public interface {{domainTitleCase}}Repository extends AbstractEnterpriseReposit
      * @return list of active {{domain}}s ordered by creation date descending
      */
     @Query("SELECT t FROM {{domainTitleCase}} t WHERE t.status = :status AND t.deleted = false ORDER BY t.createdAt DESC")
-    List<{{domainTitleCase}}> findByStatusOrderByCreatedAtDesc(@Param("status") String status);
+    List<{{domainTitleCase}}> findByStatusOrderByCreatedAtDesc(@Param(QueryParams.STATUS) String status);
 
     /**
      * Find all active {{domain}}s (convenience method using EntityStatus.ACTIVE).

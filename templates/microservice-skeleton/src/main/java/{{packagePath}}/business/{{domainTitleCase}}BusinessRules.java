@@ -8,6 +8,7 @@ import {{packageName}}.entity.{{domainTitleCase}};
 import {{packageName}}.repository.{{domainTitleCase}}Repository;
 import {{packageName}}.enterprise.framework.annotation.BusinessRule;
 import {{packageName}}.enterprise.framework.constants.FrameworkConstants.EntityStatus;
+import {{packageName}}.enterprise.framework.constants.MessageConstants.Business;
 import {{packageName}}.enterprise.framework.validation.RuleContext;
 import {{packageName}}.enterprise.framework.validation.RuleResult;
 import org.springframework.stereotype.Component;
@@ -140,7 +141,7 @@ public class {{domainTitleCase}}BusinessRules implements {{packageName}}.enterpr
         if (status == null) {
             return RuleResult.fail(
                     getRuleName(),
-                    "Status cannot be null",
+                    Business.STATUS_REQUIRED,
                     RuleResult.RuleSeverity.ERROR
             );
         }
@@ -157,7 +158,7 @@ public class {{domainTitleCase}}BusinessRules implements {{packageName}}.enterpr
                 if (EntityStatus.PENDING.equals(oldStatus) && EntityStatus.INACTIVE.equals(newStatus)) {
                     return RuleResult.fail(
                             getRuleName(),
-                            "Cannot transition from PENDING to INACTIVE. Must go through ACTIVE first.",
+                            String.format(Business.INVALID_STATUS_TRANSITION, oldStatus, newStatus, "Must go through ACTIVE first"),
                             RuleResult.RuleSeverity.ERROR
                     );
                 }
@@ -187,7 +188,7 @@ public class {{domainTitleCase}}BusinessRules implements {{packageName}}.enterpr
         if (description != null && description.length() < 10) {
             return RuleResult.warning(
                     getRuleName(),
-                    "Description is very short. Consider providing more details."
+                    Business.SHORT_DESCRIPTION
             );
         }
 
@@ -206,7 +207,7 @@ public class {{domainTitleCase}}BusinessRules implements {{packageName}}.enterpr
             if (activeCount >= 1000) {
                 return RuleResult.fail(
                         getRuleName(),
-                        "Maximum number of active {{domain}}s (1000) reached. Please deactivate some before creating new ones.",
+                        String.format(Business.MAX_ENTITIES_REACHED, "{{domain}}", 1000),
                         RuleResult.RuleSeverity.CRITICAL
                 );
             }
@@ -214,7 +215,7 @@ public class {{domainTitleCase}}BusinessRules implements {{packageName}}.enterpr
             if (activeCount >= 900) {
                 return RuleResult.warning(
                         getRuleName(),
-                        "Approaching maximum number of active {{domain}}s. Currently at " + activeCount + " out of 1000."
+                        String.format(Business.APPROACHING_MAX, "{{domain}}", activeCount, 1000)
                 );
             }
         }
@@ -224,7 +225,7 @@ public class {{domainTitleCase}}BusinessRules implements {{packageName}}.enterpr
             if (EntityStatus.PENDING.equals(entity.getStatus())) {
                 return RuleResult.warning(
                         getRuleName(),
-                        "Deleting a {{domain}} with PENDING status. Consider completing or canceling it first."
+                        String.format(Business.PENDING_DELETE_WARNING, "{{domain}}", EntityStatus.PENDING)
                 );
             }
         }

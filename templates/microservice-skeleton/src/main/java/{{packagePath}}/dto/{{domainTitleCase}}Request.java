@@ -5,6 +5,7 @@
 package {{packageName}}.dto;
 
 import {{packageName}}.enterprise.framework.constants.FrameworkConstants.ValidationLimits;
+import {{packageName}}.enterprise.framework.constants.MessageConstants.Validation;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;

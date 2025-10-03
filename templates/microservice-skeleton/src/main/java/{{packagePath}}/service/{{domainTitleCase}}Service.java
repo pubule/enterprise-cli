@@ -8,6 +8,10 @@ import {{packageName}}.entity.{{domainTitleCase}};
 import {{packageName}}.repository.{{domainTitleCase}}Repository;
 import {{packageName}}.business.{{domainTitleCase}}BusinessRules;
 import {{packageName}}.enterprise.framework.annotation.EnterpriseService;
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants.DetailKeys;
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants.FieldNames;
+import {{packageName}}.enterprise.framework.constants.MessageConstants.Business;
+import {{packageName}}.enterprise.framework.constants.MessageConstants.Log;
 import {{packageName}}.enterprise.framework.core.service.AbstractEnterpriseService;
 import {{packageName}}.enterprise.framework.exception.BusinessException;
 import {{packageName}}.enterprise.framework.validation.BusinessValidator;
@@ -122,25 +126,25 @@ public class {{domainTitleCase}}Service extends AbstractEnterpriseService<{{doma
      */
     @Override
     protected void executeBusinessRules({{domainTitleCase}} entity, RuleContext context) {
-        log.debug("Executing business rules for {{domain}}: {}", entity.getId());
+        log.debug(Log.EXECUTING_RULES, "{{domain}}", entity.getId());
 
         RuleResult result = businessRules.evaluate(entity, context);
 
         if (!result.isPassed()) {
-            log.warn("Business rule failed: {} - {}", result.getRuleName(), result.getMessage());
+            log.warn(Log.RULE_FAILED, result.getRuleName(), result.getMessage());
 
             // For CRITICAL and ERROR severity, throw exception to block operation
             if (result.getSeverity() == RuleResult.RuleSeverity.CRITICAL ||
                 result.getSeverity() == RuleResult.RuleSeverity.ERROR) {
                 throw new BusinessException("BUSINESS_RULE_VIOLATION")
                         .withMessage(result.getMessage())
-                        .withDetail("ruleName", result.getRuleName())
-                        .withDetail("severity", result.getSeverity().toString());
+                        .withDetail(DetailKeys.RULE_NAME, result.getRuleName())
+                        .withDetail(DetailKeys.SEVERITY, result.getSeverity().toString());
             }
 
             // For WARNING and INFO, log but allow operation to continue
             if (result.getSeverity() == RuleResult.RuleSeverity.WARNING) {
-                log.warn("Business rule warning: {}", result.getMessage());
+                log.warn(Log.RULE_WARNING, result.getMessage());
             }
         }
     }
@@ -160,21 +164,21 @@ public class {{domainTitleCase}}Service extends AbstractEnterpriseService<{{doma
      * @throws BusinessException if already active
      */
     public {{domainTitleCase}} activate(Long id) {
-        log.debug("Activating {{domain}} with id: {}", id);
+        log.debug(Log.ACTIVATING, "{{domain}}", id);
 
         {{domainTitleCase}} entity = findById(id);
 
         if (entity.isActive()) {
             throw new BusinessException("{{domain.toUpperCase()}}_ALREADY_ACTIVE")
-                    .withMessage("{{domainTitleCase}} is already active")
-                    .withDetail("id", id)
-                    .withDetail("currentStatus", entity.getStatus());
+                    .withMessage(String.format(Business.ALREADY_ACTIVE, "{{domainTitleCase}}"))
+                    .withDetail(DetailKeys.ID, id)
+                    .withDetail(DetailKeys.CURRENT_STATUS, entity.getStatus());
         }
 
         entity.activate();
         {{domainTitleCase}} updated = {{domain}}Repository.save(entity);
 
-        log.info("{{domainTitleCase}} activated successfully: {}", id);
+        log.info(Business.ACTIVATED_SUCCESSFULLY, "{{domainTitleCase}}", id);
 
         // You could publish a custom event here:
         // publishEvent(new {{domainTitleCase}}ActivatedEvent(updated));
@@ -192,21 +196,21 @@ public class {{domainTitleCase}}Service extends AbstractEnterpriseService<{{doma
      * @throws BusinessException if already inactive
      */
     public {{domainTitleCase}} deactivate(Long id) {
-        log.debug("Deactivating {{domain}} with id: {}", id);
+        log.debug(Log.DEACTIVATING, "{{domain}}", id);
 
         {{domainTitleCase}} entity = findById(id);
 
         if (entity.isInactive()) {
             throw new BusinessException("{{domain.toUpperCase()}}_ALREADY_INACTIVE")
-                    .withMessage("{{domainTitleCase}} is already inactive")
-                    .withDetail("id", id)
-                    .withDetail("currentStatus", entity.getStatus());
+                    .withMessage(String.format(Business.ALREADY_INACTIVE, "{{domainTitleCase}}"))
+                    .withDetail(DetailKeys.ID, id)
+                    .withDetail(DetailKeys.CURRENT_STATUS, entity.getStatus());
         }
 
         entity.deactivate();
         {{domainTitleCase}} updated = {{domain}}Repository.save(entity);
 
-        log.info("{{domainTitleCase}} deactivated successfully: {}", id);
+        log.info(Business.DEACTIVATED_SUCCESSFULLY, "{{domainTitleCase}}", id);
 
         return updated;
     }
@@ -219,11 +223,11 @@ public class {{domainTitleCase}}Service extends AbstractEnterpriseService<{{doma
      * @throws {{packageName}}.enterprise.framework.exception.ResourceNotFoundException if not found
      */
     public {{domainTitleCase}} findByName(String name) {
-        log.debug("Finding {{domain}} by name: {}", name);
+        log.debug(Log.FINDING_BY_NAME, "{{domain}}", name);
 
         return {{domain}}Repository.findByName(name)
                 .orElseThrow(() -> new {{packageName}}.enterprise.framework.exception.ResourceNotFoundException(
-                        getEntityName(), "name", name));
+                        getEntityName(), FieldNames.NAME, name));
     }
 
     /**
@@ -233,7 +237,7 @@ public class {{domainTitleCase}}Service extends AbstractEnterpriseService<{{doma
      * @return list of {{domain}}s with given status
      */
     public List<{{domainTitleCase}}> findByStatus(String status) {
-        log.debug("Finding all {{domain}}s with status: {}", status);
+        log.debug(Log.FINDING_BY_STATUS, "{{domain}}", status);
         return {{domain}}Repository.findByStatusAndDeletedFalse(status);
     }
 
@@ -244,7 +248,7 @@ public class {{domainTitleCase}}Service extends AbstractEnterpriseService<{{doma
      * @return list of matching {{domain}}s
      */
     public List<{{domainTitleCase}}> searchByName(String namePattern) {
-        log.debug("Searching {{domain}}s with name pattern: {}", namePattern);
+        log.debug(Log.SEARCHING_BY_PATTERN, "{{domain}}", namePattern);
         return {{domain}}Repository.searchByName(namePattern);
     }
 
@@ -255,7 +259,7 @@ public class {{domainTitleCase}}Service extends AbstractEnterpriseService<{{doma
      * @return count of {{domain}}s
      */
     public long countByStatus(String status) {
-        log.debug("Counting {{domain}}s with status: {}", status);
+        log.debug(Log.COUNTING_BY_STATUS, "{{domain}}", status);
         return {{domain}}Repository.countByStatusAndDeletedFalse(status);
     }
 }

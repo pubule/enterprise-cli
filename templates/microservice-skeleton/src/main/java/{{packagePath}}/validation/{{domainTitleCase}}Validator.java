@@ -7,7 +7,10 @@ package {{packageName}}.validation;
 import {{packageName}}.entity.{{domainTitleCase}};
 import {{packageName}}.repository.{{domainTitleCase}}Repository;
 import {{packageName}}.enterprise.framework.constants.FrameworkConstants.EntityStatus;
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants.FieldNames;
 import {{packageName}}.enterprise.framework.constants.FrameworkConstants.ValidationLimits;
+import {{packageName}}.enterprise.framework.constants.MessageConstants.Business;
+import {{packageName}}.enterprise.framework.constants.MessageConstants.Validation;
 import {{packageName}}.enterprise.framework.validation.BusinessValidator;
 import {{packageName}}.enterprise.framework.validation.ValidationContext;
 import {{packageName}}.enterprise.framework.validation.ValidationResult;
@@ -102,21 +105,33 @@ public class {{domainTitleCase}}Validator implements BusinessValidator<{{domainT
         String name = entity.getName();
 
         if (name == null || name.trim().isEmpty()) {
-            result.addError("name", "Name is required", "{{domain.toUpperCase()}}_NAME_REQUIRED");
+            result.addError(
+                    FieldNames.NAME,
+                    String.format(Validation.REQUIRED_FIELD, "Name"),
+                    "{{domain.toUpperCase()}}_NAME_REQUIRED"
+            );
             return;
         }
 
         if (name.length() < ValidationLimits.NAME_MIN_LENGTH_STRICT) {
-            result.addError("name", "Name must be at least " + ValidationLimits.NAME_MIN_LENGTH_STRICT + " characters long", "{{domain.toUpperCase()}}_NAME_TOO_SHORT");
+            result.addError(
+                    FieldNames.NAME,
+                    String.format(Validation.MIN_LENGTH, "Name", ValidationLimits.NAME_MIN_LENGTH_STRICT),
+                    "{{domain.toUpperCase()}}_NAME_TOO_SHORT"
+            );
         }
 
         if (name.length() > ValidationLimits.NAME_MAX_LENGTH) {
-            result.addError("name", "Name must not exceed " + ValidationLimits.NAME_MAX_LENGTH + " characters", "{{domain.toUpperCase()}}_NAME_TOO_LONG");
+            result.addError(
+                    FieldNames.NAME,
+                    String.format(Validation.MAX_LENGTH, "Name", ValidationLimits.NAME_MAX_LENGTH),
+                    "{{domain.toUpperCase()}}_NAME_TOO_LONG"
+            );
         }
 
         // Example: Forbidden words check
         if (name.toLowerCase().contains("test") || name.toLowerCase().contains("tmp")) {
-            result.addWarning("name", "Name contains test/temporary keywords");
+            result.addWarning(FieldNames.NAME, Business.NAME_CONTAINS_KEYWORDS);
         }
     }
 
@@ -127,12 +142,16 @@ public class {{domainTitleCase}}Validator implements BusinessValidator<{{domainT
         String description = entity.getDescription();
 
         if (description != null && description.length() > ValidationLimits.DESCRIPTION_MAX_LENGTH) {
-            result.addError("description", "Description must not exceed " + ValidationLimits.DESCRIPTION_MAX_LENGTH + " characters", "{{domain.toUpperCase()}}_DESCRIPTION_TOO_LONG");
+            result.addError(
+                    FieldNames.DESCRIPTION,
+                    String.format(Validation.MAX_LENGTH, "Description", ValidationLimits.DESCRIPTION_MAX_LENGTH),
+                    "{{domain.toUpperCase()}}_DESCRIPTION_TOO_LONG"
+            );
         }
 
         // Warning if description is missing
         if (description == null || description.trim().isEmpty()) {
-            result.addWarning("description", "Description is recommended for better documentation");
+            result.addWarning(FieldNames.DESCRIPTION, Business.DESCRIPTION_RECOMMENDED);
         }
     }
 
@@ -143,14 +162,18 @@ public class {{domainTitleCase}}Validator implements BusinessValidator<{{domainT
         String status = entity.getStatus();
 
         if (status == null || status.trim().isEmpty()) {
-            result.addError("status", "Status is required", "{{domain.toUpperCase()}}_STATUS_REQUIRED");
+            result.addError(
+                    FieldNames.STATUS,
+                    String.format(Validation.REQUIRED_FIELD, "Status"),
+                    "{{domain.toUpperCase()}}_STATUS_REQUIRED"
+            );
             return;
         }
 
         if (!VALID_STATUSES.contains(status.toUpperCase())) {
             result.addError(
-                    "status",
-                    "Status must be one of: " + String.join(", ", VALID_STATUSES),
+                    FieldNames.STATUS,
+                    String.format(Business.STATUS_INVALID, String.join(", ", VALID_STATUSES)),
                     "{{domain.toUpperCase()}}_STATUS_INVALID"
             );
         }
@@ -171,8 +194,8 @@ public class {{domainTitleCase}}Validator implements BusinessValidator<{{domainT
             // For CREATE: check if name exists
             if ({{domain}}Repository.existsByName(name)) {
                 result.addError(
-                        "name",
-                        "{{domainTitleCase}} with this name already exists",
+                        FieldNames.NAME,
+                        String.format(Business.DUPLICATE_NAME, "{{domainTitleCase}}"),
                         "{{domain.toUpperCase()}}_NAME_DUPLICATE"
                 );
             }
@@ -181,8 +204,8 @@ public class {{domainTitleCase}}Validator implements BusinessValidator<{{domainT
             Long currentId = entity.getId();
             if (currentId != null && {{domain}}Repository.existsByNameAndIdNot(name, currentId)) {
                 result.addError(
-                        "name",
-                        "Another {{domain}} with this name already exists",
+                        FieldNames.NAME,
+                        String.format(Business.ANOTHER_EXISTS, "{{domain}}"),
                         "{{domain.toUpperCase()}}_NAME_DUPLICATE"
                 );
             }
@@ -195,7 +218,10 @@ public class {{domainTitleCase}}Validator implements BusinessValidator<{{domainT
     private void validateForCreate({{domainTitleCase}} entity, ValidationResult result) {
         // Example: New entities should start with PENDING status
         if (!EntityStatus.PENDING.equals(entity.getStatus())) {
-            result.addWarning("status", "New {{domain}}s typically start with PENDING status");
+            result.addWarning(
+                    FieldNames.STATUS,
+                    String.format(Business.NEW_ENTITY_STATUS, "{{domain}}", EntityStatus.PENDING)
+            );
         }
     }
 
@@ -214,8 +240,8 @@ public class {{domainTitleCase}}Validator implements BusinessValidator<{{domainT
         // Example: Cannot change status from INACTIVE to ACTIVE directly
         if (EntityStatus.INACTIVE.equals(existing.getStatus()) && EntityStatus.ACTIVE.equals(entity.getStatus())) {
             result.addError(
-                    "status",
-                    "Cannot activate an inactive {{domain}}. Use the activate endpoint instead.",
+                    FieldNames.STATUS,
+                    String.format(Business.CANNOT_ACTIVATE, "{{domain}}"),
                     "{{domain.toUpperCase()}}_INVALID_STATUS_TRANSITION"
             );
         }

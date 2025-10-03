@@ -10,6 +10,9 @@ import {{packageName}}.entity.{{domainTitleCase}};
 import {{packageName}}.mapper.{{domainTitleCase}}Mapper;
 import {{packageName}}.service.{{domainTitleCase}}Service;
 import {{packageName}}.enterprise.framework.annotation.EnterpriseController;
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants.FieldNames;
+import {{packageName}}.enterprise.framework.constants.FrameworkConstants.QueryParams;
+import {{packageName}}.enterprise.framework.constants.MessageConstants.Log;
 import {{packageName}}.enterprise.framework.core.controller.AbstractEnterpriseController;
 import {{packageName}}.enterprise.framework.core.repository.SpecificationBuilder;
 import {{packageName}}.enterprise.framework.dto.ApiResponse;
@@ -92,21 +95,21 @@ public class {{domainTitleCase}}Controller extends AbstractEnterpriseController<
         SpecificationBuilder<{{domainTitleCase}}> builder = new SpecificationBuilder<>();
 
         // Add search criteria based on query parameters
-        if (criteria.containsKey("name")) {
-            builder.withLike("name", criteria.get("name"));
+        if (criteria.containsKey(QueryParams.NAME)) {
+            builder.withLike(FieldNames.NAME, criteria.get(QueryParams.NAME));
         }
 
-        if (criteria.containsKey("status")) {
-            builder.withEqual("status", criteria.get("status"));
+        if (criteria.containsKey(QueryParams.STATUS)) {
+            builder.withEqual(FieldNames.STATUS, criteria.get(QueryParams.STATUS));
         }
 
-        if (criteria.containsKey("description")) {
-            builder.withLike("description", criteria.get("description"));
+        if (criteria.containsKey(QueryParams.DESCRIPTION)) {
+            builder.withLike(FieldNames.DESCRIPTION, criteria.get(QueryParams.DESCRIPTION));
         }
 
         // Example: Date range filter
-        if (criteria.containsKey("createdAfter")) {
-            // builder.withGreaterThanOrEqual("createdAt", parseDate(criteria.get("createdAfter")));
+        if (criteria.containsKey(QueryParams.CREATED_AFTER)) {
+            // builder.withGreaterThanOrEqual(FieldNames.CREATED_AT, parseDate(criteria.get(QueryParams.CREATED_AFTER)));
         }
 
         return builder.build();
@@ -142,7 +145,7 @@ public class {{domainTitleCase}}Controller extends AbstractEnterpriseController<
      */
     @PostMapping("/{id}/activate")
     public ResponseEntity<ApiResponse<{{domainTitleCase}}Response>> activate(@PathVariable Long id) {
-        log.debug("REST request to activate {{domain}}: {}", id);
+        log.debug(Log.REST_ACTIVATE, "{{domain}}", id);
 
         {{domainTitleCase}} activated = {{domain}}Service.activate(id);
         {{domainTitleCase}}Response response = mapper.toResponse(activated);
@@ -167,7 +170,7 @@ public class {{domainTitleCase}}Controller extends AbstractEnterpriseController<
      */
     @PostMapping("/{id}/deactivate")
     public ResponseEntity<ApiResponse<{{domainTitleCase}}Response>> deactivate(@PathVariable Long id) {
-        log.debug("REST request to deactivate {{domain}}: {}", id);
+        log.debug(Log.REST_DEACTIVATE, "{{domain}}", id);
 
         {{domainTitleCase}} deactivated = {{domain}}Service.deactivate(id);
         {{domainTitleCase}}Response response = mapper.toResponse(deactivated);
@@ -193,7 +196,7 @@ public class {{domainTitleCase}}Controller extends AbstractEnterpriseController<
     @GetMapping("/by-status/{status}")
     public ResponseEntity<ApiResponse<List<{{domainTitleCase}}Response>>> findByStatus(
             @PathVariable String status) {
-        log.debug("REST request to find {{domain}}s by status: {}", status);
+        log.debug(Log.REST_FIND_BY_STATUS, "{{domain}}", status);
 
         List<{{domainTitleCase}}> entities = {{domain}}Service.findByStatus(status);
         List<{{domainTitleCase}}Response> responses = entities.stream()
@@ -219,7 +222,7 @@ public class {{domainTitleCase}}Controller extends AbstractEnterpriseController<
     @GetMapping("/search-by-name")
     public ResponseEntity<ApiResponse<List<{{domainTitleCase}}Response>>> searchByName(
             @RequestParam String pattern) {
-        log.debug("REST request to search {{domain}}s by name pattern: {}", pattern);
+        log.debug(Log.REST_SEARCH, "{{domain}}", pattern);
 
         List<{{domainTitleCase}}> entities = {{domain}}Service.searchByName(pattern);
         List<{{domainTitleCase}}Response> responses = entities.stream()
@@ -244,7 +247,7 @@ public class {{domainTitleCase}}Controller extends AbstractEnterpriseController<
      */
     @GetMapping("/count-by-status/{status}")
     public ResponseEntity<ApiResponse<Long>> countByStatus(@PathVariable String status) {
-        log.debug("REST request to count {{domain}}s by status: {}", status);
+        log.debug(Log.REST_COUNT, "{{domain}}", status);
 
         long count = {{domain}}Service.countByStatus(status);
 

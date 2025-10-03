@@ -87,6 +87,7 @@ public final class FrameworkConstants {
      * Standard field names used across entities.
      */
     public static final class FieldNames {
+        // System fields
         public static final String ID = "id";
         public static final String CREATED_AT = "createdAt";
         public static final String CREATED_BY = "createdBy";
@@ -98,7 +99,52 @@ public final class FrameworkConstants {
         public static final String TENANT_ID = "tenantId";
         public static final String VERSION = "version";
 
+        // Common business fields
+        public static final String NAME = "name";
+        public static final String DESCRIPTION = "description";
+        public static final String STATUS = "status";
+        public static final String TYPE = "type";
+        public static final String CODE = "code";
+        public static final String ACTIVE = "active";
+
         private FieldNames() {
+        }
+    }
+
+    /**
+     * Common query parameter names for search and filtering.
+     */
+    public static final class QueryParams {
+        public static final String NAME = "name";
+        public static final String DESCRIPTION = "description";
+        public static final String STATUS = "status";
+        public static final String TYPE = "type";
+        public static final String ACTIVE = "active";
+        public static final String CREATED_AFTER = "createdAfter";
+        public static final String CREATED_BEFORE = "createdBefore";
+        public static final String NAME_PATTERN = "namePattern";
+        public static final String SEARCH = "search";
+
+        private QueryParams() {
+        }
+    }
+
+    /**
+     * Keys for exception detail maps (used in .withDetail()).
+     */
+    public static final class DetailKeys {
+        public static final String ID = "id";
+        public static final String FIELD_NAME = "fieldName";
+        public static final String FIELD_VALUE = "fieldValue";
+        public static final String RULE_NAME = "ruleName";
+        public static final String SEVERITY = "severity";
+        public static final String CURRENT_STATUS = "currentStatus";
+        public static final String NEW_STATUS = "newStatus";
+        public static final String ENTITY_NAME = "entityName";
+        public static final String ERROR_CODE = "errorCode";
+        public static final String CONSTRAINT_NAME = "constraintName";
+
+        private DetailKeys() {
         }
     }
 
